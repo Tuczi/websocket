@@ -150,6 +150,9 @@ void serveClient(int clientSocket) {
    printf(tmp.c_str());
    write(clientSocket, tmp.c_str(), tmp.size());
 
+   memset(buf,0,buf_size);
+   read(clientSocket,buf,buf_size);
+   printf(buf);
    write(clientSocket,"OK",2);
 
    close(clientSocket);
