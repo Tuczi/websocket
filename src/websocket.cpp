@@ -1,19 +1,4 @@
-#include <iostream>
-
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#define SERVER_PORT 9000
-#define QUEUE_SIZE 5
+#include "websocket.hpp"
 
 void childend(int signo)
 {
@@ -22,7 +7,7 @@ void childend(int signo)
    printf("\t[end of child process number %d]\n", pid);
 }
 
-int main(int argc, char* argv[])
+void startServer(int& argc, char**& argv)
 {
    int nSocket, nClientSocket;
    int nBind, nListen;
@@ -42,7 +27,7 @@ int main(int argc, char* argv[])
    nSocket = socket(AF_INET, SOCK_STREAM, 0);
    if (nSocket < 0)
    {
-       fprintf(stderr, "%s: Can't create a socket.\n", argv[0]);
+       fprintf(stderr, "%sCan't create a socket.\n", argv[0]);
        exit(1);
    }
    setsockopt(nSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&nFoo, sizeof(nFoo));
@@ -74,19 +59,19 @@ int main(int argc, char* argv[])
        }
 
        /* connection */
-       if (! fork())
-       {
-           printf("%s: [connection from %s]\n",
-                  argv[0], inet_ntoa((struct in_addr)stClientAddr.sin_addr));
-           //write(nClientSocket, "Hello World!\n", 13);
-           char buf[10000]={'\0'};
-           read(nClientSocket, buf, 10000);
-           printf(buf);
-           close(nClientSocket);
-           exit(0);
-       }
+       serveClient(nClientSocket);
    }
 
    close(nSocket);
-   return(0);
+}
+
+void serveClient(int clientSocket) {
+  if(!fork()) {
+   static int buf_size = 10000;
+   char buf[buf_size]={'\0'};
+   read(clientSocket, buf, buf_size);
+   printf(buf);
+   close(clientSocket);
+   exit(0);
+  }
 }
