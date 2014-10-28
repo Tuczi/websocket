@@ -1,6 +1,6 @@
 CXX = g++
 CXX_FLAGS = -Wall -Wextra -std=c++11
-LFLAGS =
+LFLAGS = -lcrypto
 
 WEBSOCKET_FILES = main websocket
 WEBSOCKET_OBJS = $(WEBSOCKET_FILES:%=obj/%.o)
@@ -14,4 +14,4 @@ $(WEBSOCKET_OBJS): obj/%.o: src/%.cpp
 	$(CXX) -c $(CXX_FLAGS) -o $@ $<
 
 clean: 
-	rm obj/*
+	rm -f obj/*
