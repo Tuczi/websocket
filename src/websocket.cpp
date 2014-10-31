@@ -147,13 +147,15 @@ void serveClient(int clientSocket) {
     LINE_END;
 
    tmp = ss.str();
-   printf(tmp.c_str());
+   printf("%s\n", tmp.c_str());
    write(clientSocket, tmp.c_str(), tmp.size());
 
    memset(buf,0,buf_size);
-   read(clientSocket,buf,buf_size);
-   printf(buf);
-   write(clientSocket,"OK",2);
+   int s =read(clientSocket,buf,buf_size);
+   uint8_t* msg = parseMsg((uint8_t*)buf, s);
+   //printf("%s\n", msg);
+
+   //write(clientSocket,"OK",2);
 
    close(clientSocket);
    exit(0);
@@ -181,3 +183,47 @@ std::string parseClientHeandShake(std::string& input) {
    return base64_encode(sha, SHA_DIGEST_LENGTH);
 }
 
+uint8_t* parseMsg(const uint8_t* buf, size_t bufSize) {
+  bool fin = buf[0] & (1<<7);
+  bool rsv1 = buf[0] & (1<<6),
+       rsv2 = buf[0] & (1<<5),
+       rsv3 = buf[0] & (1<<4);
+  uint8_t opcode = (buf[0] & 0xf0);//not shifted
+  bool mask = buf[1] & (1<<7);
+  uint64_t size;
+  uint8_t tmp = (uint8_t)buf[1] & ~(1<<7);
+  uint8_t shift = 0;
+
+  switch(tmp) {//TODO conwert network byte order to system
+    case 126:
+      size = ((uint64_t)buf[2]<<8) & uint64_t(buf[1]);
+      shift=4;
+      break;
+    case 127:
+      //TODO size
+      shift=10;//the most significant bit MUST be 0)
+      break;
+    default:
+      size = tmp;
+      shift=2;
+  }
+  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %d\n",fin, rsv1, rsv2, rsv3, opcode, mask, tmp, size);
+
+  uint8_t* maskingKey = nullptr;
+  if(mask) {
+    maskingKey = (uint8_t*)buf+shift;
+    shift+=4;
+  }
+  uint64_t extension_data_length =0, application_data_length = size;//TODO
+
+  uint8_t* data = (uint8_t*)buf+shift;
+
+  if(mask)
+    for(size_t i=0; i<(size_t)size;i++) {//TODO 64bit data
+      data[i]=data[i] ^ maskingKey[i%4];
+      printf("%c",data[i]);
+    }
+    printf("\n");
+
+  return data;
+}
