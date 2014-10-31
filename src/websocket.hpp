@@ -14,6 +14,10 @@
 #include <string>
 
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
+#include <openssl/evp.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
 #define LINE_END "\n\r"
 #include <string>
 #include <sstream>
@@ -35,6 +39,7 @@ class Websocket {
 
     std::string parseHeandshake(std::string& input);
     void heandshakeResponce(std::string& keyResponce);
+    std::string encodeBase64(unsigned char input[SHA_DIGEST_LENGTH]);
     
     int parseFrame(uint8_t * buffer, size_t bufferSize);
     uint8_t* frameHeader(size_t dataSize, size_t& headerSize);

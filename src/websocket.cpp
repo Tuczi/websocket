@@ -1,58 +1,5 @@
 #include "websocket.hpp"
 
-static const std::string base64_chars =
-             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-             "abcdefghijklmnopqrstuvwxyz"
-             "0123456789+/";
-
-
-static inline bool is_base64(unsigned char c) {
-  return (isalnum(c) || (c == '+') || (c == '/'));
-}
-
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
-  std::string ret;
-  int i = 0;
-  int j = 0;
-  unsigned char char_array_3[3];
-  unsigned char char_array_4[4];
-
-  while (in_len--) {
-    char_array_3[i++] = *(bytes_to_encode++);
-    if (i == 3) {
-      char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-      char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-      char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-      char_array_4[3] = char_array_3[2] & 0x3f;
-
-      for(i = 0; (i <4) ; i++)
-        ret += base64_chars[char_array_4[i]];
-      i = 0;
-    }
-  }
-
-  if (i)
-  {
-    for(j = i; j < 3; j++)
-      char_array_3[j] = '\0';
-
-    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-    char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-    char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-    char_array_4[3] = char_array_3[2] & 0x3f;
-
-    for (j = 0; (j < i + 1); j++)
-      ret += base64_chars[char_array_4[j]];
-
-    while((i++ < 3))
-      ret += '=';
-
-  }
-
-  return ret;
-
-}
-
 void childend(int signo)
 {
    pid_t pid;
@@ -149,6 +96,26 @@ void Websocket::heandshakeResponce(std::string& keyResponce) {
    ::write(descriptor, tmp.c_str(), tmp.size()-1);
 }
 
+std::string Websocket::encodeBase64(unsigned char input[SHA_DIGEST_LENGTH])
+{
+  BIO *bmem, *b64;
+  BUF_MEM *bptr;
+
+  b64 = BIO_new(BIO_f_base64());
+  bmem = BIO_new(BIO_s_mem());
+  b64 = BIO_push(b64, bmem);
+  BIO_write(b64, input, SHA_DIGEST_LENGTH);
+  BIO_flush(b64);
+  BIO_get_mem_ptr(b64, &bptr);
+
+  std::string result(bptr->length, '\0');
+  memcpy((void*)result.c_str(), bptr->data, bptr->length-1);
+
+  BIO_free_all(b64);
+
+  return result;
+}
+
 std::string Websocket::parseHeandshake(std::string& input) {
     static std::string serverKeyToAppend = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     std::string result;
@@ -167,7 +134,7 @@ std::string Websocket::parseHeandshake(std::string& input) {
     unsigned char sha[SHA_DIGEST_LENGTH];
     SHA1((const unsigned char *)result.c_str(), result.size() , sha);
 
-   return base64_encode(sha, SHA_DIGEST_LENGTH);
+   return encodeBase64(sha);
 }
 
 int Websocket::read(uint8_t* buf, size_t bufSize)  {
