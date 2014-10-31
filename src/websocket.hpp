@@ -23,4 +23,5 @@ void startServer(int& argc, char**& argv);
 void serveClient(int clientSocket);
 
 std::string parseClientHeandShake(std::string&);
-uint8_t* parseMsg(const uint8_t *, size_t size);
+uint8_t* parseFrame(const uint8_t *, size_t size);
+uint8_t* frameHeader(size_t dataSize, size_t& headerSize);

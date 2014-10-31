@@ -148,16 +148,21 @@ void serveClient(int clientSocket) {
 
    tmp = ss.str();
    printf("%s\n", tmp.c_str());
-   write(clientSocket, tmp.c_str(), tmp.size());
+   write(clientSocket, tmp.c_str(), tmp.size()-1);
 
    memset(buf,0,buf_size);
    int s =read(clientSocket,buf,buf_size);
-   uint8_t* msg = parseMsg((uint8_t*)buf, s);
+   uint8_t* msg = parseFrame((uint8_t*)buf, s);
    //printf("%s\n", msg);
+   std::string ala="OK";
+   size_t hs;
+   uint8_t* h = frameHeader(ala.size(),hs);
+   uint8_t dupa[] = { 0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f};
+  write(clientSocket, dupa, sizeof(dupa));
+   //write(clientSocket, h, hs);
+ //write(clientSocket, ala.c_str(), 2);
 
-   //write(clientSocket,"OK",2);
-
-   close(clientSocket);
+  close(clientSocket);
    exit(0);
   }
 }
@@ -183,12 +188,12 @@ std::string parseClientHeandShake(std::string& input) {
    return base64_encode(sha, SHA_DIGEST_LENGTH);
 }
 
-uint8_t* parseMsg(const uint8_t* buf, size_t bufSize) {
+uint8_t* parseFrame(const uint8_t* buf, size_t bufSize) {
   bool fin = buf[0] & (1<<7);
   bool rsv1 = buf[0] & (1<<6),
        rsv2 = buf[0] & (1<<5),
        rsv3 = buf[0] & (1<<4);
-  uint8_t opcode = (buf[0] & 0xf0);//not shifted
+  uint8_t opcode = (buf[0] & 0x0f);
   bool mask = buf[1] & (1<<7);
   uint64_t size;
   uint8_t tmp = (uint8_t)buf[1] & ~(1<<7);
@@ -226,4 +231,37 @@ uint8_t* parseMsg(const uint8_t* buf, size_t bufSize) {
     printf("\n");
 
   return data;
+}
+
+uint8_t* frameHeader(size_t bufSize, size_t& headerSize) {
+  //TODO more then single frame
+  //TODO size to network byte order
+  uint8_t* header;
+  if(bufSize <= 125) {
+    headerSize=2;
+    header = new uint8_t[headerSize];
+    header[1]= bufSize;
+
+  } else if( bufSize <= 0xffff ) {
+    headerSize=4;
+    header = new uint8_t[headerSize];
+    header[1]=126;
+
+    header[2]= (bufSize & 0xff00)>>8;
+    header[3]= (bufSize & 0x00ff)>>8;
+  } else {
+    headerSize=10;
+    header = new uint8_t[headerSize];
+    header[1]=127;
+
+    //TODO
+  }
+  //set fin bit, rsv1,2,3, opcode(text frame)
+  //TODO more opcodes
+  header[0]= 0x81;
+
+  for(int i=0;i<headerSize;i++)
+    printf("0x%x, ",header[i]);
+  printf("\n");
+  return header;
 }
