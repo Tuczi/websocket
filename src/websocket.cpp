@@ -1,15 +1,5 @@
 #include "websocket.hpp"
 
-#define LINE_END "\n\r"
-#include <string>
-#include <sstream>
-void test(){
-  std::string tmp ="Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n";
-  std::cout<< parseClientHeandShake(tmp)<<std::endl;
-
-  //equal to: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-}
-
 static const std::string base64_chars =
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "abcdefghijklmnopqrstuvwxyz"
@@ -109,7 +99,6 @@ void startServer(int& argc, char**& argv)
    {
        fprintf(stderr, "%s: Can't set queue size.\n", argv[0]);
    }
-   test();//remove
    while(1)
    {
        /* block for connection request */
@@ -132,42 +121,35 @@ void serveClient(int clientSocket) {
   if(!fork()) {
    static int buf_size = 10000;
    char buf[buf_size]={'\0'};
-   read(clientSocket, buf, buf_size);
-   printf(buf);
+   tuczi::Websocket websocket(clientSocket);
 
-   std::string tmp(buf);
-   std::string keyResponce=parseClientHeandShake(tmp);
+   int status = websocket.read( (uint8_t*) buf, buf_size);
+   //TODO printf or sth
+   char* dataToSend = "Hello";
+   websocket.write( (uint8_t*) dataToSend, 5);
 
+   close(clientSocket);
+   exit(0);
+  }
+}
+
+namespace tuczi {
+
+void Websocket::heandshakeResponce(std::string& keyResponce) {
    std::stringstream ss;
    ss<< "HTTP/1.1 101 Switching Protocols"<< LINE_END<<
-    "Upgrade: websocket"<<+LINE_END<<
+    "Upgrade: websocket"<<LINE_END<<
     "Connection: Upgrade"<<LINE_END<<
     "Sec-WebSocket-Accept: "<<keyResponce<< LINE_END<<
     //"Sec-WebSocket-Protocol: chat" <<LINE_END<<
     LINE_END;
 
-   tmp = ss.str();
+   std::string tmp=ss.str();
    printf("%s\n", tmp.c_str());
-   write(clientSocket, tmp.c_str(), tmp.size()-1);
-
-   memset(buf,0,buf_size);
-   int s =read(clientSocket,buf,buf_size);
-   uint8_t* msg = parseFrame((uint8_t*)buf, s);
-   //printf("%s\n", msg);
-   std::string ala="OK";
-   size_t hs;
-   uint8_t* h = frameHeader(ala.size(),hs);
-   uint8_t dupa[] = { 0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f};
-  write(clientSocket, dupa, sizeof(dupa));
-   //write(clientSocket, h, hs);
- //write(clientSocket, ala.c_str(), 2);
-
-  close(clientSocket);
-   exit(0);
-  }
+   ::write(descriptor, tmp.c_str(), tmp.size()-1);
 }
 
-std::string parseClientHeandShake(std::string& input) {
+std::string Websocket::parseHeandshake(std::string& input) {
     static std::string serverKeyToAppend = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     std::string result;
 
@@ -188,7 +170,20 @@ std::string parseClientHeandShake(std::string& input) {
    return base64_encode(sha, SHA_DIGEST_LENGTH);
 }
 
-uint8_t* parseFrame(const uint8_t* buf, size_t bufSize) {
+int Websocket::read(uint8_t* buf, size_t bufSize)  {
+	int result = ::read(descriptor, buf, bufSize);
+	return result - parseFrame(buf, bufSize);
+}
+
+int Websocket::write(uint8_t* buf, size_t bufSize)  {
+	size_t headerSize;
+	uint8_t* frameHeaderData = frameHeader(bufSize, headerSize);
+	
+	::write(descriptor, frameHeaderData, headerSize);
+	return ::write(descriptor, buf, bufSize);
+}
+
+int Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
   bool fin = buf[0] & (1<<7);
   bool rsv1 = buf[0] & (1<<6),
        rsv2 = buf[0] & (1<<5),
@@ -214,9 +209,9 @@ uint8_t* parseFrame(const uint8_t* buf, size_t bufSize) {
   }
   printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %d\n",fin, rsv1, rsv2, rsv3, opcode, mask, tmp, size);
 
-  uint8_t* maskingKey = nullptr;
+  uint8_t maskingKey[4];
   if(mask) {
-    maskingKey = (uint8_t*)buf+shift;
+    memcpy(maskingKey, buf+shift, 4);
     shift+=4;
   }
   uint64_t extension_data_length =0, application_data_length = size;//TODO
@@ -225,15 +220,15 @@ uint8_t* parseFrame(const uint8_t* buf, size_t bufSize) {
 
   if(mask)
     for(size_t i=0; i<(size_t)size;i++) {//TODO 64bit data
-      data[i]=data[i] ^ maskingKey[i%4];
+      buf[i]=data[i] ^ maskingKey[i%4];
       printf("%c",data[i]);
     }
     printf("\n");
 
-  return data;
+  return shift;
 }
 
-uint8_t* frameHeader(size_t bufSize, size_t& headerSize) {
+uint8_t* Websocket::frameHeader(size_t bufSize, size_t& headerSize) {
   //TODO more then single frame
   //TODO size to network byte order
   uint8_t* header;
@@ -264,4 +259,6 @@ uint8_t* frameHeader(size_t bufSize, size_t& headerSize) {
     printf("0x%x, ",header[i]);
   printf("\n");
   return header;
+}
+
 }
