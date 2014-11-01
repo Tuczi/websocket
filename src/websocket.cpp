@@ -145,7 +145,7 @@ int Websocket::read(uint8_t* buf, size_t bufSize)  {
 int Websocket::write(uint8_t* buf, size_t bufSize)  {
 	size_t headerSize;
 	uint8_t* frameHeaderData = frameHeader(bufSize, headerSize);
-	
+
 	::write(descriptor, frameHeaderData, headerSize);
 	return ::write(descriptor, buf, bufSize);
 }
@@ -161,18 +161,21 @@ int Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
   uint8_t tmp = (uint8_t)buf[1] & ~(1<<7);
   uint8_t shift = 0;
 
-  switch(tmp) {//TODO conwert network byte order to system
+  switch(tmp) {
     case 126:
-      size = ((uint64_t)buf[2]<<8) & uint64_t(buf[1]);
-      shift=4;
+      size = ntohs( buf[2]<<8 | buf[3] );
+      shift = 4;
       break;
     case 127:
-      //TODO size
-      shift=10;//the most significant bit MUST be 0)
+      size = 0;
+      for(int i=0;i<8;i++)
+        size|=(buf[2+i]<<(56-8*i));
+      size = be64toh(size);
+      shift = 10; //TODO the most significant bit MUST be 0)
       break;
     default:
       size = tmp;
-      shift=2;
+      shift = 2;
   }
   printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %d\n",fin, rsv1, rsv2, rsv3, opcode, mask, tmp, size);
 
@@ -181,7 +184,7 @@ int Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
     memcpy(maskingKey, buf+shift, 4);
     shift+=4;
   }
-  uint64_t extension_data_length =0, application_data_length = size;//TODO
+  //uint64_t extension_data_length =0, application_data_length = size;//TODO
 
   uint8_t* data = (uint8_t*)buf+shift;
 
@@ -197,26 +200,28 @@ int Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
 
 uint8_t* Websocket::frameHeader(size_t bufSize, size_t& headerSize) {
   //TODO more then single frame
-  //TODO size to network byte order
   uint8_t* header;
   if(bufSize <= 125) {
-    headerSize=2;
+    headerSize = 2;
     header = new uint8_t[headerSize];
     header[1]= bufSize;
 
   } else if( bufSize <= 0xffff ) {
-    headerSize=4;
+    headerSize = 4;
     header = new uint8_t[headerSize];
-    header[1]=126;
+    header[1] = 126;
 
-    header[2]= (bufSize & 0xff00)>>8;
-    header[3]= (bufSize & 0x00ff)>>8;
+    uint16_t tmp = htons(bufSize);
+    header[2] = uint8_t(tmp >> 8);
+    header[3] = uint8_t(tmp);
   } else {
-    headerSize=10;
+    headerSize = 10;
     header = new uint8_t[headerSize];
-    header[1]=127;
+    header[1] = 127;
 
-    //TODO
+    uint64_t tmp = htobe64(bufSize);
+    for(int i=0;i<8;i++)
+      header[2+i] = uint8_t(tmp >> (56-8*i));
   }
   //set fin bit, rsv1,2,3, opcode(text frame)
   //TODO more opcodes
