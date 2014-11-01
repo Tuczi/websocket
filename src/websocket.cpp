@@ -71,6 +71,9 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   else if(shift)
     for(size_t i=0; i<(size_t)bytesRead-shift;i++)
       buf[i]=data[i];
+  else if(readData.mask)
+    for(size_t i=0; i<(size_t)bytesRead-shift;i++)
+      buf[i]=buf[i] ^ readData.maskingKey[i%4];
 
   bytesRead-=shift;
   readData.frameSize -= bytesRead;
