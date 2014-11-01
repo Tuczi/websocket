@@ -1,37 +1,23 @@
 #ifndef TUCZI_WEBSOCKET_HPP
 #define TUCZI_WEBSOCKET_HPP
 
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
-#include <netdb.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include <iostream>
 #include <string>
 #include <sstream>
 
 #define LINE_END "\n\r"
-
-#define SERVER_PORT 9000
-#define QUEUE_SIZE 5
-
-void childend(int signo);
-void startServer(int& argc, char**& argv);
-void serveClient(int clientSocket);
 
 namespace tuczi {
 class Websocket {

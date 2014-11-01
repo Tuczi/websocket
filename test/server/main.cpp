@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "websocket.hpp"
+#include "exampleServer.hpp"
 
 int main(int argc, char** argv) {
   startServer(argc, argv);

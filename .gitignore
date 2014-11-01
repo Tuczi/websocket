@@ -3,3 +3,4 @@ bin/
 
 obj
 !obj/.keep
+!obj/test/server/.keep
