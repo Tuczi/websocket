@@ -21,28 +21,64 @@
 
 namespace tuczi {
 class Websocket {
+  struct ReadData {
+    bool fin = false;
+    bool mask = false;
+    uint8_t maskingKey[4];
+    uint64_t frameSize = 0;
+  };
   private:
     const int descriptor;
+    uint64_t writeFrameSize;
+    ReadData readData;
+
 
     static const size_t BUF_SIZE = 1024;
-    
+
     std::string parseHeandshake(std::string& input);
     void heandshakeResponce(std::string& keyResponce);
     std::string encodeBase64(unsigned char input[SHA_DIGEST_LENGTH]);
-    
-    int parseFrame(uint8_t * buffer, size_t bufferSize);
+
+    size_t parseFrame(uint8_t * buffer, size_t bufferSize);
     uint8_t* frameHeader(size_t dataSize, size_t& headerSize);
 
   public:
-    Websocket(int descriptor_): descriptor(descriptor_) { 
+    Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readData() {
     std::string buffer(BUF_SIZE, 0);
       ::read(descriptor, (void*) buffer.c_str(), BUF_SIZE);
       std::string key = parseHeandshake(buffer);
       heandshakeResponce(key);
     }
 
-  int read(uint8_t* buffer, size_t bufferSize);
-  int write(uint8_t* buffer, size_t bufferSize);
+  /**
+   * Read from websocket. This method can be called multiple times to
+   *
+   * @return false if there is no more data in last frame. true otherwise
+   */
+  bool read(uint8_t* buffer, size_t bufferSize, size_t& dataRead);
+
+  /**
+   * Send data into client. May be called multiple times.
+   * writeHeader method have to be called before first call of this metod!
+   *
+   * @see writeHeader
+   *
+   * @return
+   */
+  bool write(uint8_t* buffer, size_t bufferSize, size_t& dataWritten);
+
+  /**
+   * Start sending frame (or frames to client).
+   * Send websocketHeader. After call this method
+   * method write can be called.
+   *
+   * @param dataSize size of application data
+   * @param dataType type of data to be send (see opcode in RFC6455)
+   *  default 1.
+   * @return TODO
+   */
+  bool writeHeader(size_t dataSize, uint8_t dataType = 1); //TODO #define or const
 };
 }
 #endif
+

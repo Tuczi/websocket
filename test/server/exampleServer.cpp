@@ -2,6 +2,7 @@
 
 void childend(int signo)
 {
+   fprintf(stderr, "exiting with signal %d\n", signo);
    pid_t pid;
    pid = wait(NULL);
    printf("\t[end of child process number %d]\n", pid);
@@ -9,6 +10,8 @@ void childend(int signo)
 
 void startServer(int& argc, char**& argv)
 {
+   if(argc<1) exit(1);
+
    int nSocket, nClientSocket;
    int nBind, nListen;
    int nFoo = 1;
@@ -67,14 +70,18 @@ void startServer(int& argc, char**& argv)
 void serveClient(int clientSocket) {
   if(!fork()) {
    static int buf_size = 10000;
-   char buf[buf_size]={'\0'};
+   char buf[buf_size] = {'\0'};
    tuczi::Websocket websocket(clientSocket);
 
-   websocket.read( (uint8_t*) buf, buf_size);
-   //TODO printf or sth
-   std::string dataToSend = "Hello";
-   websocket.write( (uint8_t*) dataToSend.c_str(), dataToSend.size());
+   size_t byteCounter;
+   websocket.read( (uint8_t*) buf, buf_size, byteCounter );
+   printf("byteCounter %d, readed: %s\n", byteCounter, buf);
 
+   std::string dataToSend = "Hello";
+   websocket.writeHeader( dataToSend.size() );
+
+   websocket.write( (uint8_t*) dataToSend.c_str(), dataToSend.size(), byteCounter );
+   printf("byteCounter: %d\n", byteCounter);
    close(clientSocket);
    exit(0);
   }
