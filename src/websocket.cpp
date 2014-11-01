@@ -124,8 +124,8 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
     case 127:
       readData.frameSize = 0;
       for(int i=0;i<8;i++)
-        readData.frameSize|=(buf[2+i]<<(8*i));
-      readData.frameSize = be64toh(readData.frameSize);
+        readData.frameSize|=(uint64_t(buf[2+i])<< uint64_t(8*i));
+      readData.frameSize = be64toh(readData.frameSize);//be64toh(readData.frameSize);
       shift = 10; //TODO the most significant bit MUST be 0)
       break;
     default:

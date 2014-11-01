@@ -9,11 +9,10 @@ function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = 
   
   function onOpen(evt) {
     writeToScreen("CONNECTED");
-    doSend("WebSocket rocks");
     
     var tmp="";
     var text="WebSockets rocks";
-    for(var i=0;i<256*10;i++)
+    for(var i=0;i<256*17;i++)
 		tmp=tmp + text;
     
     doSend(tmp);   

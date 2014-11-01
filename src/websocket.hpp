@@ -4,6 +4,7 @@
 #define _BSD_SOURCE	
 #include <endian.h>
 
+
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
@@ -46,7 +47,7 @@ class Websocket {
 
   public:
     Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readData() {
-    std::string buffer(BUF_SIZE, 0);
+      std::string buffer(BUF_SIZE, 0);
       ::read(descriptor, (void*) buffer.c_str(), BUF_SIZE);
       std::string key = parseHeandshake(buffer);
       heandshakeResponce(key);
