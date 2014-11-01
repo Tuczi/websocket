@@ -1,6 +1,9 @@
 #ifndef TUCZI_WEBSOCKET_HPP
 #define TUCZI_WEBSOCKET_HPP
 
+#define _BSD_SOURCE	
+#include <endian.h>
+
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>

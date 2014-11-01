@@ -70,7 +70,7 @@ void startServer(int& argc, char**& argv)
 void serveClient(int clientSocket) {
   if(!fork()) {
     bool status;
-    static int buf_size = 10000;
+    static int buf_size = 100000;
     char buf[buf_size] = {'\0'};
     tuczi::Websocket websocket(clientSocket);
 

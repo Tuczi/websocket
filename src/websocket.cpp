@@ -118,13 +118,13 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
 
   switch(tmp) {
     case 126:
-      readData.frameSize = ntohs( buf[2]<<8 | buf[3] );
+      readData.frameSize = ntohs( buf[2] | buf[3]<<8 );
       shift = 4;
       break;
     case 127:
       readData.frameSize = 0;
       for(int i=0;i<8;i++)
-        readData.frameSize|=(buf[2+i]<<(56-8*i));
+        readData.frameSize|=(buf[2+i]<<(8*i));
       readData.frameSize = be64toh(readData.frameSize);
       shift = 10; //TODO the most significant bit MUST be 0)
       break;
@@ -132,7 +132,7 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
       readData.frameSize = tmp;
       shift = 2;
   }
-  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %ld\n", readData.fin, rsv1, rsv2, rsv3, opcode, readData.mask, tmp, readData.frameSize);
+  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %ld %d\n", readData.fin, rsv1, rsv2, rsv3, opcode, readData.mask, tmp, readData.frameSize, buf[2]<<16 | buf[3]<<8 | buf[4] );
 
   if(readData.mask) {
     memcpy(readData.maskingKey, buf+shift, 4);
@@ -155,7 +155,7 @@ uint8_t* Websocket::frameHeader(size_t bufSize, size_t& headerSize) {
     header = new uint8_t[headerSize];
     header[1] = 126;
 
-    uint16_t tmp = htons(bufSize);
+    uint16_t tmp = htobe16(bufSize);
     header[2] = uint8_t(tmp >> 8);
     header[3] = uint8_t(tmp);
   } else {
