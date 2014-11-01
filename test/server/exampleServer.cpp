@@ -69,20 +69,32 @@ void startServer(int& argc, char**& argv)
 
 void serveClient(int clientSocket) {
   if(!fork()) {
-   static int buf_size = 10000;
-   char buf[buf_size] = {'\0'};
-   tuczi::Websocket websocket(clientSocket);
+    bool status;
+    static int buf_size = 10000;
+    char buf[buf_size] = {'\0'};
+    tuczi::Websocket websocket(clientSocket);
 
-   size_t byteCounter;
-   websocket.read( (uint8_t*) buf, buf_size, byteCounter );
-   printf("byteCounter %d, readed: %s\n", byteCounter, buf);
+    size_t byteCounter;
+    do{
+	  status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
+	  buf[byteCounter]='\0';
+      printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
+     } while(status);
 
-   std::string dataToSend = "Hello";
-   websocket.writeHeader( dataToSend.size() );
+    std::string dataToSend = "Hello";
+    status = websocket.writeHeader( dataToSend.size() );
+    printf("writeHeader - status %d\n", status);
 
-   websocket.write( (uint8_t*) dataToSend.c_str(), dataToSend.size(), byteCounter );
-   printf("byteCounter: %d\n", byteCounter);
-   close(clientSocket);
-   exit(0);
+    if(status) {
+	  size_t shift=0;
+	  do {
+        status = websocket.write( (uint8_t*) dataToSend.c_str()+shift, dataToSend.size()-shift, byteCounter) ;
+        shift+=byteCounter;
+        printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
+      } while(status);
+    }
+
+    close(clientSocket);
+    exit(0);
   }
 }

@@ -32,7 +32,6 @@ class Websocket {
     uint64_t writeFrameSize;
     ReadData readData;
 
-
     static const size_t BUF_SIZE = 1024;
 
     std::string parseHeandshake(std::string& input);
@@ -53,7 +52,7 @@ class Websocket {
   /**
    * Read from websocket. This method can be called multiple times to
    *
-   * @return false if there is no more data in last frame. true otherwise
+   * @return true if have to be called again (to receive next part of data). false otherwise.
    */
   bool read(uint8_t* buffer, size_t bufferSize, size_t& dataRead);
 
@@ -63,7 +62,7 @@ class Websocket {
    *
    * @see writeHeader
    *
-   * @return
+   * @return true if have to be called again (to send next part of data). false otherwise
    */
   bool write(uint8_t* buffer, size_t bufferSize, size_t& dataWritten);
 
@@ -75,7 +74,7 @@ class Websocket {
    * @param dataSize size of application data
    * @param dataType type of data to be send (see opcode in RFC6455)
    *  default 1.
-   * @return TODO
+   * @return true if correct. false otherwise
    */
   bool writeHeader(size_t dataSize, uint8_t dataType = 1); //TODO #define or const
 };
