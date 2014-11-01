@@ -94,6 +94,12 @@ void serveClient(int clientSocket) {
       } while(status);
     }
 
+    do{
+      status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
+      buf[byteCounter]='\0';
+      printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
+    } while(status);
+
     close(clientSocket);
     exit(0);
   }

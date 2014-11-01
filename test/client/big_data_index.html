@@ -7,15 +7,16 @@ function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = 
   websocket.onclose = function(evt) { onClose(evt) }; websocket.onmessage = function(evt) { onMessage(evt) };
   websocket.onerror = function(evt) { onError(evt) }; }
   
-  function onOpen(evt) {
-    writeToScreen("CONNECTED");
-    
+  function generateData(){
     var tmp="";
     var text="WebSockets rocks";
     for(var i=0;i<256*17;i++)
 		tmp=tmp + text;
-    
-    doSend(tmp);   
+	return tmp;  
+  }
+  function onOpen(evt) {
+    writeToScreen("CONNECTED");
+    doSend(generateData());   
   }
   function onClose(evt) {
     writeToScreen("DISCONNECTED");
@@ -23,6 +24,10 @@ function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = 
   
   function onMessage(evt) {
     writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
+    
+    // send extra
+    doSend(generateData());   
+    
     websocket.close();
   }
   function onError(evt) {

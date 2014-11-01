@@ -29,6 +29,7 @@ class Websocket {
     bool fin = false;
     bool mask = false;
     uint8_t maskingKey[4];
+    uint8_t maskingKeyIter=0;
     uint64_t frameSize = 0;
   };
   private:

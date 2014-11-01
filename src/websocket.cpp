@@ -67,13 +67,16 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
 
   if(readData.mask && shift)
     for(size_t i=0; i<(size_t)bytesRead-shift; i++) //TODO 64bit data
-      buf[i]=data[i] ^ readData.maskingKey[i%4];
+      buf[i]=data[i] ^ readData.maskingKey[(i + readData.maskingKeyIter)%4];
   else if(shift)
     for(size_t i=0; i<(size_t)bytesRead-shift;i++)
       buf[i]=data[i];
   else if(readData.mask)
-    for(size_t i=0; i<(size_t)bytesRead-shift;i++)
-      buf[i]=buf[i] ^ readData.maskingKey[i%4];
+    for(size_t i=0; i<(size_t)bytesRead;i++)
+      buf[i]=buf[i] ^ readData.maskingKey[(i + readData.maskingKeyIter)%4];
+	
+	if(readData.mask)
+		readData.maskingKeyIter = (readData.maskingKeyIter + bytesRead-shift)%4;
 
   bytesRead-=shift;
   readData.frameSize -= bytesRead;
