@@ -6,7 +6,7 @@ function init() { output = document.getElementById("output"); testWebSocket(); }
 function testWebSocket() { 
 	websocket = new WebSocket(wsUri); websocket.onopen = function(evt) { onOpen(evt) 
 	};
-	websocket.binaryType = "arraybuffer"; //blob
+	websocket.binaryType = "blob";//"arraybuffer"; //blob
 	websocket.onclose = function(evt) { onClose(evt) };
 	websocket.onmessage = function(evt) { onMessage(evt) };
 	websocket.onerror = function(evt) { onError(evt) }; 
@@ -22,7 +22,16 @@ function testWebSocket() {
   function onMessage(evt) {
     writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
     //canvas
-	document.getElementById("image").src = "data:image/png;base64,"+ window.btoa(evt.data);
+    
+    var fr = new FileReader();
+    fr.onloadend = function() {
+        var dataUrl = fr.result;
+        // Paint image, as a proof of concept
+        var img = document.getElementById("image");
+        img.src = dataUrl;
+        document.body.appendChild(img);
+    };
+    fr.readAsDataURL(evt.data);
     //websocket.close();
   }
   function onError(evt) {
@@ -48,9 +57,7 @@ function testWebSocket() {
 <button onclick='doSend("small.jpg")'>small</button>
 <button onclick='doSend("32x32.jpg")'>32x32</button>
 <button onclick='doSend("a.png")'>a</button>
-<img id="image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot">
-<canvas id='canvas' width='400' height='400'>
-      Canvas not supported
-    </canvas>
+<br/>
+<img id="image" width="400px" height= "400px" src="" alt="Red dot">
 <div id="output"></div> 
 
