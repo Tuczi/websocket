@@ -69,7 +69,12 @@ void startServer(int& argc, char**& argv)
 
 void serveClient(int clientSocket) {
   if(!fork()) {
-    bool status;
+	textTest(clientSocket);
+  }
+}
+
+void textTest(int clientSocket) {
+	 bool status;
     static int buf_size = 1000;
     char buf[buf_size] = {'\0'};
     tuczi::Websocket websocket(clientSocket);
@@ -102,5 +107,50 @@ void serveClient(int clientSocket) {
 
     close(clientSocket);
     exit(0);
-  }
 }
+
+void imgTest(int clientSocket) {
+	 bool status;
+    static int buf_size = 1000;
+    char buf[buf_size] = {'\0'};
+    uint8_t dataToSend[buf_size] ;
+    tuczi::Websocket websocket(clientSocket);
+
+	while(true) {
+      size_t byteCounter;
+      do{
+	    status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
+	    buf[byteCounter]='\0';
+        printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
+       } while(status);
+      
+      std::string name("test/server/resources/");
+      name = name + buf;
+      
+      std::fstream file(name);
+      std::cout<<name<<" File exists?"<< file.good()<<std::endl;
+      file.seekg (0, file.end);
+	  int length = file.tellg();
+      status = websocket.writeHeader( length, tuczi::Websocket::Opcode::BINARY );
+      printf("writeHeader - status %d, size %d\n", status, length);
+      
+      int sendedBytes=0;
+      if(status) {
+	    size_t shift=0;
+	    do {
+		  shift=0;
+		  file.read((char*)dataToSend, buf_size);
+		  int c=file.gcount();
+		  while(shift!=buf_size) {
+            status = websocket.write( (uint8_t*) dataToSend+shift, c-shift, byteCounter) ;
+            shift+=byteCounter;
+          }
+          sendedBytes+=shift;
+          printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
+        } while(sendedBytes < length);
+      }
+	}
+    close(clientSocket);
+    exit(0);
+}
+

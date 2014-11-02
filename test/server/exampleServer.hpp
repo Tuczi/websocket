@@ -11,6 +11,8 @@
 
 #include <signal.h>
 
+#include <fstream>
+
 #define SERVER_PORT 9000
 #define QUEUE_SIZE 5
 
@@ -18,4 +20,6 @@ void childend(int signo);
 void startServer(int& argc, char**& argv);
 void serveClient(int clientSocket);
 
+void textTest(int);
+void imgTest(int);
 #endif

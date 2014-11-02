@@ -16,7 +16,7 @@ function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = 
   
   function onMessage(evt) {
     writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
-	getElementById("image").src = "data:image/jpg;base64,"+atob(evt.data);
+	document.getElementById("image").src = "data:image/jpg;base64,"+btoa(evt.data);
     //websocket.close();
   }
   function onError(evt) {
