@@ -1,9 +1,7 @@
 #ifndef TUCZI_WEBSOCKET_HPP
 #define TUCZI_WEBSOCKET_HPP
 
-#define _BSD_SOURCE
 #include <endian.h>
-
 
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
@@ -42,15 +40,15 @@ class Websocket {
     uint8_t maskingKeyIter=0;
     uint64_t frameSize = 0;
   };
-
-  enum Opcode: uint8_t {
-    CONTINUATION = 0,
-    TEXT = 1,
-    BINARY = 2,
-    CONNECTION_CLOSE = 8,
-    PING_FRAME = 9,
-    PONG_FRAME = 10
-  };
+  public:
+    enum Opcode: uint8_t {
+      CONTINUATION = 0,
+      TEXT = 1,
+      BINARY = 2,
+      CONNECTION_CLOSE = 8,
+      PING_FRAME = 9,
+      PONG_FRAME = 10
+    };
 
   private:
     const int descriptor;
