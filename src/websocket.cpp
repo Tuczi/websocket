@@ -44,7 +44,7 @@ std::string Websocket::parseHeandshake(std::string& input) {
   pos+=19;
   size_t endPos = input.find("\n", pos);
   endPos--;
-
+std::cout<<input;
   result = input.substr(pos, endPos-pos);
   std::cout<<"key: \""<<result<<"\""<<std::endl;
 
@@ -158,15 +158,15 @@ void Websocket::frameHeader(size_t bufSize, Opcode opcode, uint8_t (&header)[MAX
     header[1] = 126;
 
     uint16_t tmp = htobe16(bufSize);
-    header[2] = uint8_t(tmp >> 8);
-    header[3] = uint8_t(tmp);
+    header[2] = uint8_t(tmp);
+    header[3] = uint8_t(tmp >> 8);
   } else {
     headerSize = 10;
     header[1] = 127;
 
     uint64_t tmp = htobe64(bufSize);
     for(int i=0;i<8;i++)
-      header[2+i] = uint8_t(tmp >> (56-8*i));
+      header[2+i] = uint8_t(tmp >> (8*i));
   }
   //set fin bit, rsv1,2,3, opcode
   header[0]= 0x80 | opcode;
