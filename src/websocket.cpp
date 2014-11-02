@@ -60,32 +60,32 @@ std::string Websocket::parseHeandshake(std::string& input) {
 bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   bytesRead = ::read(descriptor, buf, bufSize);
   size_t shift = 0;
-  if(readData.frameSize == 0) { //new frame
+  if(readCtx.frameSize == 0) { //new frame
     shift = parseFrame(buf, bufSize);
   }
   uint8_t* data = (uint8_t*)buf+shift;
 
-  if(readData.mask && shift)
+  if(readCtx.mask && shift)
     for(size_t i=0; i<(size_t)bytesRead-shift; i++) //TODO 64bit data
-      buf[i]=data[i] ^ readData.maskingKey[(i + readData.maskingKeyIter)%4];
+      buf[i]=data[i] ^ readCtx.maskingKey[(i + readCtx.maskingKeyIter)%4];
   else if(shift)
     for(size_t i=0; i<(size_t)bytesRead-shift;i++)
       buf[i]=data[i];
-  else if(readData.mask)
+  else if(readCtx.mask)
     for(size_t i=0; i<(size_t)bytesRead;i++)
-      buf[i]=buf[i] ^ readData.maskingKey[(i + readData.maskingKeyIter)%4];
+      buf[i]=buf[i] ^ readCtx.maskingKey[(i + readCtx.maskingKeyIter)%4];
 	
-	if(readData.mask)
-		readData.maskingKeyIter = (readData.maskingKeyIter + bytesRead-shift)%4;
+	if(readCtx.mask)
+		readCtx.maskingKeyIter = (readCtx.maskingKeyIter + bytesRead-shift)%4;
 
   bytesRead-=shift;
-  readData.frameSize -= bytesRead;
+  readCtx.frameSize -= bytesRead;
 
-  if(readData.frameSize ==0) { //end of frame
-    readData.mask=false;
+  if(readCtx.frameSize ==0) { //end of frame
+    readCtx.mask=false;
   }
 
-  return readData.frameSize != 0;
+  return readCtx.frameSize != 0;
 }
 
 bool Websocket::write(uint8_t* buf, size_t bufSize, size_t& bytesWritten) {
@@ -113,35 +113,35 @@ bool Websocket::writeHeader(size_t dataSize, uint8_t dataType) {
 }
 
 size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
-  readData.fin = buf[0] & (1<<7);
+  readCtx.fin = buf[0] & (1<<7);
   bool rsv1 = buf[0] & (1<<6),
        rsv2 = buf[0] & (1<<5),
        rsv3 = buf[0] & (1<<4);
   uint8_t opcode = (buf[0] & 0x0f);
-  readData.mask = buf[1] & (1<<7);
+  readCtx.mask = buf[1] & (1<<7);
   uint8_t tmp = (uint8_t)buf[1] & ~(1<<7);
   uint8_t shift = 0;
 
   switch(tmp) {
     case 126:
-      readData.frameSize = ntohs( buf[2] | buf[3]<<8 );
+      readCtx.frameSize = ntohs( buf[2] | buf[3]<<8 );
       shift = 4;
       break;
     case 127:
-      readData.frameSize = 0;
+      readCtx.frameSize = 0;
       for(int i=0;i<8;i++)
-        readData.frameSize|=(uint64_t(buf[2+i])<< uint64_t(8*i));
-      readData.frameSize = be64toh(readData.frameSize);//be64toh(readData.frameSize);
+        readCtx.frameSize|=(uint64_t(buf[2+i])<< uint64_t(8*i));
+      readCtx.frameSize = be64toh(readCtx.frameSize);
       shift = 10; //TODO the most significant bit MUST be 0)
       break;
     default:
-      readData.frameSize = tmp;
+      readCtx.frameSize = tmp;
       shift = 2;
   }
-  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %ld %d\n", readData.fin, rsv1, rsv2, rsv3, opcode, readData.mask, tmp, readData.frameSize, buf[2]<<16 | buf[3]<<8 | buf[4] );
+  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %ld %d\n", readCtx.fin, rsv1, rsv2, rsv3, opcode, readCtx.mask, tmp, readCtx.frameSize, buf[2]<<16 | buf[3]<<8 | buf[4] );
 
-  if(readData.mask) {
-    memcpy(readData.maskingKey, buf+shift, 4);
+  if(readCtx.mask) {
+    memcpy(readCtx.maskingKey, buf+shift, 4);
     shift+=4;
   }
   //uint64_t extension_data_length =0, application_data_length = size;//TODO

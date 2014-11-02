@@ -1,7 +1,7 @@
 #ifndef TUCZI_WEBSOCKET_HPP
 #define TUCZI_WEBSOCKET_HPP
 
-#define _BSD_SOURCE	
+#define _BSD_SOURCE
 #include <endian.h>
 
 
@@ -24,18 +24,29 @@
 #define LINE_END "\n\r"
 
 namespace tuczi {
+
+/**
+ * Websocket protocol (RFC6435) server socket implementation.
+ * Supported versions: 13.
+ *
+ * It wraps socket descriptor and provides methods to read/send data.
+ * Supports partially data sending and receiving (low buffers).
+ *
+ * No threads are used to send/receive data! (You can use non-blocking IO mechanisms or threads).
+ */
 class Websocket {
-  struct ReadData {
+  struct ReadCtx { 
     bool fin = false;
     bool mask = false;
     uint8_t maskingKey[4];
     uint8_t maskingKeyIter=0;
     uint64_t frameSize = 0;
   };
+
   private:
     const int descriptor;
     uint64_t writeFrameSize;
-    ReadData readData;
+    ReadCtx readCtx;
 
     static const size_t BUF_SIZE = 1024;
 
@@ -47,7 +58,7 @@ class Websocket {
     uint8_t* frameHeader(size_t dataSize, size_t& headerSize);
 
   public:
-    Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readData() {
+    Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readCtx() {
       std::string buffer(BUF_SIZE, 0);
       ::read(descriptor, (void*) buffer.c_str(), BUF_SIZE);
       std::string key = parseHeandshake(buffer);
