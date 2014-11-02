@@ -1,4 +1,5 @@
 TODO list:
+* Binary data sending
 * Client Heandshake behavior:
   * origin accepting?
   * accpet only version 13 (repeating heandshake)
