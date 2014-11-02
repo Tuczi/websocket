@@ -98,13 +98,12 @@ bool Websocket::write(uint8_t* buf, size_t bufSize, size_t& bytesWritten) {
   return writeFrameSize!=0;
 }
 
-bool Websocket::writeHeader(size_t dataSize, uint8_t dataType) {
-  //TODO dataType
+bool Websocket::writeHeader(size_t dataSize, Opcode dataType) {
   uint8_t frameHeaderData[MAX_HEADER_SIZE];
   size_t headerSize, bytesWritten = 0;
 
   writeFrameSize = dataSize;
-  frameHeader(dataSize, frameHeaderData, headerSize);
+  frameHeader(dataSize, dataType, frameHeaderData, headerSize);
 
   while(bytesWritten != headerSize)
     bytesWritten += ::write(descriptor, frameHeaderData+bytesWritten, headerSize-bytesWritten);
@@ -148,7 +147,7 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
   return shift;
 }
 
-void Websocket::frameHeader(size_t bufSize, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize) {
+void Websocket::frameHeader(size_t bufSize, Opcode opcode, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize) {
   //TODO more then single frame
   if(bufSize <= 125) {
     headerSize = 2;
@@ -169,9 +168,8 @@ void Websocket::frameHeader(size_t bufSize, uint8_t (&header)[MAX_HEADER_SIZE], 
     for(int i=0;i<8;i++)
       header[2+i] = uint8_t(tmp >> (56-8*i));
   }
-  //set fin bit, rsv1,2,3, opcode(text frame)
-  //TODO more opcodes
-  header[0]= 0x81;
+  //set fin bit, rsv1,2,3, opcode
+  header[0]= 0x80 | opcode;
 
   for(int i=0;i<headerSize;i++)
     printf("0x%x, ",header[i]);

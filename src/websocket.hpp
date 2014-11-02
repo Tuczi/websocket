@@ -43,6 +43,15 @@ class Websocket {
     uint64_t frameSize = 0;
   };
 
+  enum Opcode: uint8_t {
+    CONTINUATION = 0,
+    TEXT = 1,
+    BINARY = 2,
+    CONNECTION_CLOSE = 8,
+    PING_FRAME = 9,
+    PONG_FRAME = 10
+  };
+
   private:
     const int descriptor;
     uint64_t writeFrameSize;
@@ -56,7 +65,7 @@ class Websocket {
     std::string encodeBase64(unsigned char input[SHA_DIGEST_LENGTH]);
 
     size_t parseFrame(uint8_t * buffer, size_t bufferSize);
-    void frameHeader(size_t dataSize, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize);
+    void frameHeader(size_t dataSize, Opcode opcode, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize);
 
   public:
     Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readCtx() {
@@ -93,7 +102,7 @@ class Websocket {
    *  default 1.
    * @return true if correct. false otherwise
    */
-  bool writeHeader(size_t dataSize, uint8_t dataType = 1); //TODO #define or const
+  bool writeHeader(size_t dataSize, Opcode dataType = Opcode::TEXT); //TODO #define or const
 };
 }
 #endif
