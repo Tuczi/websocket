@@ -18,11 +18,8 @@ function testWebSocket() {
   function onClose(evt) {
     writeToScreen("DISCONNECTED");
   }
-
-}
   
   function onMessage(evt) {
-	 var tmp = new Uint8Array(evt.data);
     writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
     //canvas
 	document.getElementById("image").src = "data:image/png;base64,"+ window.btoa(evt.data);
