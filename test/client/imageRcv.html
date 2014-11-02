@@ -3,9 +3,14 @@
 var wsUri = "ws://localhost:9000/";
 var output; 
 function init() { output = document.getElementById("output"); testWebSocket(); } 
-function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = function(evt) { onOpen(evt) };
-  websocket.onclose = function(evt) { onClose(evt) }; websocket.onmessage = function(evt) { onMessage(evt) };
-  websocket.onerror = function(evt) { onError(evt) }; }
+function testWebSocket() { 
+	websocket = new WebSocket(wsUri); websocket.onopen = function(evt) { onOpen(evt) 
+	};
+	websocket.binaryType = "arraybuffer"; //blob
+	websocket.onclose = function(evt) { onClose(evt) };
+	websocket.onmessage = function(evt) { onMessage(evt) };
+	websocket.onerror = function(evt) { onError(evt) }; 
+ }
   
   function onOpen(evt) {
     writeToScreen("CONNECTED");
@@ -16,7 +21,8 @@ function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = 
   
   function onMessage(evt) {
     writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
-	document.getElementById("image").src = "data:image/jpg;base64,"+btoa(evt.data);
+    //canvas
+	//document.getElementById("image").src = "data:image/jpg;base64,"+btoa(evt.data);
     //websocket.close();
   }
   function onError(evt) {
@@ -39,6 +45,8 @@ function testWebSocket() { websocket = new WebSocket(wsUri); websocket.onopen = 
 <h2>WebSocket Test</h2>  
 <button onclick='doSend("medium.jpg")'>medium</button>
 <button onclick='doSend("big.jpg")'>big</button>
+<button onclick='doSend("small.jpg")'>small</button>
+<button onclick='doSend("32x32.jpg")'>32x32</button>
 <img id="image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot">
 <div id="output"></div> 
 
