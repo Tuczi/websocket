@@ -4,3 +4,5 @@ bin/
 obj
 !obj/.keep
 !obj/test/server/.keep
+
+test/server/resources
