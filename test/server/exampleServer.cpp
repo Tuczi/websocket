@@ -127,7 +127,7 @@ void imgTest(int clientSocket) {
       std::string name("test/server/resources/");
       name = name + buf;
       
-      std::fstream file(name);
+      std::fstream file(name, std::ios_base::in| std::ios_base::binary);
       std::cout<<name<<" File exists?"<< file.good()<<std::endl;
       file.seekg (0, file.end);
 	  int length = file.tellg();
@@ -151,6 +151,7 @@ void imgTest(int clientSocket) {
           printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
         } while(sendedBytes < length);
       }
+      file.close();
 	}
     close(clientSocket);
     exit(0);

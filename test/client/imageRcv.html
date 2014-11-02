@@ -18,11 +18,14 @@ function testWebSocket() {
   function onClose(evt) {
     writeToScreen("DISCONNECTED");
   }
+
+}
   
   function onMessage(evt) {
+	 var tmp = new Uint8Array(evt.data);
     writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
     //canvas
-	//document.getElementById("image").src = "data:image/jpg;base64,"+btoa(evt.data);
+	document.getElementById("image").src = "data:image/png;base64,"+ window.btoa(evt.data);
     //websocket.close();
   }
   function onError(evt) {
@@ -47,6 +50,10 @@ function testWebSocket() {
 <button onclick='doSend("big.jpg")'>big</button>
 <button onclick='doSend("small.jpg")'>small</button>
 <button onclick='doSend("32x32.jpg")'>32x32</button>
+<button onclick='doSend("a.png")'>a</button>
 <img id="image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot">
+<canvas id='canvas' width='400' height='400'>
+      Canvas not supported
+    </canvas>
 <div id="output"></div> 
 
