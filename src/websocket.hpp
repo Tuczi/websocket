@@ -35,7 +35,7 @@ namespace tuczi {
  * No threads are used to send/receive data! (You can use non-blocking IO mechanisms or threads).
  */
 class Websocket {
-  struct ReadCtx { 
+  struct ReadCtx {
     bool fin = false;
     bool mask = false;
     uint8_t maskingKey[4];
@@ -49,13 +49,14 @@ class Websocket {
     ReadCtx readCtx;
 
     static const size_t BUF_SIZE = 1024;
+    static const size_t MAX_HEADER_SIZE = 10;
 
     std::string parseHeandshake(std::string& input);
     void heandshakeResponce(std::string& keyResponce);
     std::string encodeBase64(unsigned char input[SHA_DIGEST_LENGTH]);
 
     size_t parseFrame(uint8_t * buffer, size_t bufferSize);
-    uint8_t* frameHeader(size_t dataSize, size_t& headerSize);
+    void frameHeader(size_t dataSize, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize);
 
   public:
     Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readCtx() {

@@ -66,7 +66,7 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   uint8_t* data = (uint8_t*)buf+shift;
 
   if(readCtx.mask && shift)
-    for(size_t i=0; i<(size_t)bytesRead-shift; i++) //TODO 64bit data
+    for(size_t i=0; i<(size_t)bytesRead-shift; i++)
       buf[i]=data[i] ^ readCtx.maskingKey[(i + readCtx.maskingKeyIter)%4];
   else if(shift)
     for(size_t i=0; i<(size_t)bytesRead-shift;i++)
@@ -74,9 +74,9 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   else if(readCtx.mask)
     for(size_t i=0; i<(size_t)bytesRead;i++)
       buf[i]=buf[i] ^ readCtx.maskingKey[(i + readCtx.maskingKeyIter)%4];
-	
-	if(readCtx.mask)
-		readCtx.maskingKeyIter = (readCtx.maskingKeyIter + bytesRead-shift)%4;
+
+  if(readCtx.mask)
+    readCtx.maskingKeyIter = (readCtx.maskingKeyIter + bytesRead-shift)%4;
 
   bytesRead-=shift;
   readCtx.frameSize -= bytesRead;
@@ -89,27 +89,27 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
 }
 
 bool Websocket::write(uint8_t* buf, size_t bufSize, size_t& bytesWritten) {
-  if(writeFrameSize <= bufSize) 
+  if(writeFrameSize <= bufSize)
     bytesWritten = ::write(descriptor, buf, writeFrameSize);
-  else 
-	bytesWritten = ::write(descriptor, buf, bufSize);
-  
+  else
+    bytesWritten = ::write(descriptor, buf, bufSize);
+
   writeFrameSize -= bytesWritten;
   return writeFrameSize!=0;
 }
 
 bool Websocket::writeHeader(size_t dataSize, uint8_t dataType) {
-  //TODO not dynamic alloc
   //TODO dataType
-  //TODO check write
-  size_t headerSize;
+  uint8_t frameHeaderData[MAX_HEADER_SIZE];
+  size_t headerSize, bytesWritten = 0;
+
   writeFrameSize = dataSize;
-  uint8_t* frameHeaderData = frameHeader(dataSize, headerSize);
+  frameHeader(dataSize, frameHeaderData, headerSize);
 
-  size_t bytesWritten = ::write(descriptor, frameHeaderData, headerSize);
-  delete[] frameHeaderData;
+  while(bytesWritten != headerSize)
+    bytesWritten += ::write(descriptor, frameHeaderData+bytesWritten, headerSize-bytesWritten);
 
-  return bytesWritten == headerSize;
+  return true;
 }
 
 size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
@@ -148,17 +148,14 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
   return shift;
 }
 
-uint8_t* Websocket::frameHeader(size_t bufSize, size_t& headerSize) {
+void Websocket::frameHeader(size_t bufSize, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize) {
   //TODO more then single frame
-  uint8_t* header;
   if(bufSize <= 125) {
     headerSize = 2;
-    header = new uint8_t[headerSize];
     header[1]= bufSize;
 
   } else if( bufSize <= 0xffff ) {
     headerSize = 4;
-    header = new uint8_t[headerSize];
     header[1] = 126;
 
     uint16_t tmp = htobe16(bufSize);
@@ -166,7 +163,6 @@ uint8_t* Websocket::frameHeader(size_t bufSize, size_t& headerSize) {
     header[3] = uint8_t(tmp);
   } else {
     headerSize = 10;
-    header = new uint8_t[headerSize];
     header[1] = 127;
 
     uint64_t tmp = htobe64(bufSize);
@@ -180,7 +176,6 @@ uint8_t* Websocket::frameHeader(size_t bufSize, size_t& headerSize) {
   for(int i=0;i<headerSize;i++)
     printf("0x%x, ",header[i]);
   printf("\n");
-  return header;
 }
 
 }
