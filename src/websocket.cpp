@@ -2,21 +2,36 @@
 
 namespace tuczi {
 
-void Websocket::heandshakeResponce(std::string& keyResponce) {
+bool Websocket::init() {
+  HeandshakeCtx heandshakeCtx;
+  std::string buffer(HEANDSHAKE_BUF_SIZE,'\0');
+
+  ::read(descriptor, (void*) buffer.c_str(), HEANDSHAKE_BUF_SIZE);
+std::cout<<buffer;
+  parseHeandshake(buffer, heandshakeCtx);
+std::cout<<"parse end\n";
+  //TODO valid request
+
+  heandshakeResponce(heandshakeCtx);
+  return true;
+}
+
+void Websocket::heandshakeResponce(HeandshakeCtx& heandshakeCtx) {
    std::stringstream ss;
    ss<< "HTTP/1.1 101 Switching Protocols"<< LINE_END<<
     "Upgrade: websocket"<<LINE_END<<
     "Connection: Upgrade"<<LINE_END<<
-    "Sec-WebSocket-Accept: "<<keyResponce<< LINE_END<<
+    "Sec-WebSocket-Accept: "<<heandshakeCtx.responceKey<< LINE_END<<
     //"Sec-WebSocket-Protocol: chat" <<LINE_END<<
     LINE_END;
 
    std::string tmp=ss.str();
    printf("%s\n", tmp.c_str());
+
    ::write(descriptor, tmp.c_str(), tmp.size()-1);
 }
 
-std::string Websocket::encodeBase64(unsigned char input[SHA_DIGEST_LENGTH])
+std::string Websocket::encodeBase64(unsigned char (&input)[SHA_DIGEST_LENGTH])
 {
   BIO *bmem, *b64;
   BUF_MEM *bptr;
@@ -36,25 +51,39 @@ std::string Websocket::encodeBase64(unsigned char input[SHA_DIGEST_LENGTH])
   return result;
 }
 
-std::string Websocket::parseHeandshake(std::string& input) {
+void Websocket::parseHeandshake(std::string& buffer, HeandshakeCtx& heandshakeCtx) {
   static std::string serverKeyToAppend = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-  std::string result;
 
-  size_t pos = input.find("Sec-WebSocket-Key: ");
+  std::string tmp;
+  size_t pos, endPos;
+  //key
+  pos = buffer.find("Sec-WebSocket-Key: ");
   pos+=19;
-  size_t endPos = input.find("\n", pos);
+  endPos = buffer.find("\n", pos);
   endPos--;
-std::cout<<input;
-  result = input.substr(pos, endPos-pos);
-  std::cout<<"key: \""<<result<<"\""<<std::endl;
 
-  result = result + serverKeyToAppend;
-  std::cout<<"appended: \""<<result<<"\""<<std::endl;
+  tmp = buffer.substr(pos, endPos-pos);
+  std::cout<<"key: \""<<tmp<<"\""<<std::endl;
+
+  tmp += serverKeyToAppend;
+  std::cout<<"appended: \""<<tmp<<"\""<<std::endl;
 
   unsigned char sha[SHA_DIGEST_LENGTH];
-  SHA1((const unsigned char *)result.c_str(), result.size() , sha);
+  SHA1((const unsigned char *)tmp.c_str(), tmp.size() , sha);
+  heandshakeCtx.responceKey = encodeBase64(sha);
 
-  return encodeBase64(sha);
+  //versions
+  pos = buffer.find("Sec-WebSocket-Version: ");
+  pos+=24;
+  endPos = buffer.find("\n", pos);
+  endPos--;
+
+  do {
+    heandshakeCtx.versions.push_back(atoi(buffer.c_str()+pos));
+    pos = buffer.find(",", pos)+1;
+  } while( pos<endPos && pos != std::string::npos );
+
+  //TODO protocols
 }
 
 bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
@@ -89,20 +118,20 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
 }
 
 bool Websocket::write(uint8_t* buf, size_t bufSize, size_t& bytesWritten) {
-  if(writeFrameSize <= bufSize)
-    bytesWritten = ::write(descriptor, buf, writeFrameSize);
+  if(writeCtx.frameSize <= bufSize)
+    bytesWritten = ::write(descriptor, buf, writeCtx.frameSize);
   else
     bytesWritten = ::write(descriptor, buf, bufSize);
 
-  writeFrameSize -= bytesWritten;
-  return writeFrameSize!=0;
+  writeCtx.frameSize -= bytesWritten;
+  return writeCtx.frameSize!=0;
 }
 
 bool Websocket::writeHeader(size_t dataSize, Opcode dataType) {
   uint8_t frameHeaderData[MAX_HEADER_SIZE];
   size_t headerSize, bytesWritten = 0;
 
-  writeFrameSize = dataSize;
+  writeCtx.frameSize = dataSize;
   frameHeader(dataSize, dataType, frameHeaderData, headerSize);
 
   while(bytesWritten != headerSize)

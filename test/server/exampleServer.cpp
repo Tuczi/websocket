@@ -78,7 +78,7 @@ void textTest(int clientSocket) {
     static int buf_size = 1000;
     char buf[buf_size] = {'\0'};
     tuczi::Websocket websocket(clientSocket);
-
+  websocket.init();
     size_t byteCounter;
     do{
 	  status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
@@ -115,7 +115,7 @@ void imgTest(int clientSocket) {
     char buf[buf_size] = {'\0'};
     uint8_t dataToSend[buf_size] ;
     tuczi::Websocket websocket(clientSocket);
-
+  websocket.init();
 	while(true) {
       size_t byteCounter;
       do{
@@ -123,10 +123,10 @@ void imgTest(int clientSocket) {
 	    buf[byteCounter]='\0';
         printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
        } while(status);
-      
+
       std::string name("test/server/resources/");
       name = name + buf;
-      
+
       std::fstream file(name, std::ios_base::in| std::ios_base::binary);
       std::cout<<name<<" File exists?"<< file.good()<<std::endl;
       file.seekg (0, file.end);
@@ -134,7 +134,7 @@ void imgTest(int clientSocket) {
 	  file.seekg (0, file.beg);
       status = websocket.writeHeader( length, tuczi::Websocket::Opcode::BINARY );
       printf("writeHeader - status %d, size %d\n", status, length);
-      
+
       int sendedBytes=0;
       if(status) {
 	    size_t shift=0;

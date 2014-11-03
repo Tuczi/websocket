@@ -11,13 +11,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <cstring>
 #include <unistd.h>
 #include <netdb.h>
 
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #define LINE_END "\n\r"
 
@@ -33,6 +34,10 @@ namespace tuczi {
  * No threads are used to send/receive data! (You can use non-blocking IO mechanisms or threads).
  */
 class Websocket {
+  static const size_t HEANDSHAKE_BUF_SIZE = 1024;
+  static const size_t HEANDSHAKE_KEY_SIZE = 100;
+  static const size_t MAX_HEADER_SIZE = 10;
+
   struct ReadCtx {
     bool fin = false;
     bool mask = false;
@@ -40,6 +45,16 @@ class Websocket {
     uint8_t maskingKeyIter=0;
     uint64_t frameSize = 0;
   };
+  struct WriteCtx {
+    uint64_t frameSize = 0;
+  };
+
+  struct HeandshakeCtx {
+    std::vector<int> versions;
+    //std::vector<char*> protocols; //TODO
+    std::string responceKey;//TODO initialize with keysize
+  };
+
   public:
     enum Opcode: uint8_t {
       CONTINUATION = 0,
@@ -52,26 +67,28 @@ class Websocket {
 
   private:
     const int descriptor;
-    uint64_t writeFrameSize;
+    WriteCtx writeCtx;
     ReadCtx readCtx;
 
-    static const size_t BUF_SIZE = 1024;
-    static const size_t MAX_HEADER_SIZE = 10;
-
-    std::string parseHeandshake(std::string& input);
-    void heandshakeResponce(std::string& keyResponce);
-    std::string encodeBase64(unsigned char input[SHA_DIGEST_LENGTH]);
+    void parseHeandshake(std::string &buffer, HeandshakeCtx& heandshakeCtx);
+    void heandshakeResponce(HeandshakeCtx& heandshakeCtx);
+    std::string encodeBase64(unsigned char (&input)[SHA_DIGEST_LENGTH]);
 
     size_t parseFrame(uint8_t * buffer, size_t bufferSize);
     void frameHeader(size_t dataSize, Opcode opcode, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize);
 
   public:
-    Websocket(int descriptor_): descriptor(descriptor_), writeFrameSize(0), readCtx() {
-      std::string buffer(BUF_SIZE, 0);
-      ::read(descriptor, (void*) buffer.c_str(), BUF_SIZE);
-      std::string key = parseHeandshake(buffer);
-      heandshakeResponce(key);
-    }
+    /**
+     * Construct an object. Set memory only. Do not send any data.
+     */
+    Websocket(int descriptor_): descriptor(descriptor_), writeCtx(), readCtx() { }
+
+    /**
+     * Init a connection. Send heandshake.
+     *
+     * @return true if connection correctly established
+     */
+    bool init();
 
   /**
    * Read from websocket. This method can be called multiple times to
