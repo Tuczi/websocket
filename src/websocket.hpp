@@ -19,6 +19,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 #define LINE_END "\n\r"
 

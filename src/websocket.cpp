@@ -10,7 +10,11 @@ bool Websocket::init() {
 std::cout<<buffer;
   parseHeandshake(buffer, heandshakeCtx);
 std::cout<<"parse end\n";
-  //TODO valid request
+
+  //valid request
+  if(std::find(heandshakeCtx.versions.begin(), heandshakeCtx.versions.end(),13)==heandshakeCtx.versions.end()) {
+    return false;
+  }
 
   heandshakeResponce(heandshakeCtx);
   return true;
@@ -22,6 +26,7 @@ void Websocket::heandshakeResponce(HeandshakeCtx& heandshakeCtx) {
     "Upgrade: websocket"<<LINE_END<<
     "Connection: Upgrade"<<LINE_END<<
     "Sec-WebSocket-Accept: "<<heandshakeCtx.responceKey<< LINE_END<<
+    "Sec-WebSocket-Version: 13"<< LINE_END<<
     //"Sec-WebSocket-Protocol: chat" <<LINE_END<<
     LINE_END;
 
@@ -74,7 +79,7 @@ void Websocket::parseHeandshake(std::string& buffer, HeandshakeCtx& heandshakeCt
 
   //versions
   pos = buffer.find("Sec-WebSocket-Version: ");
-  pos+=24;
+  pos+=23;
   endPos = buffer.find("\n", pos);
   endPos--;
 

@@ -78,7 +78,10 @@ void textTest(int clientSocket) {
     static int buf_size = 1000;
     char buf[buf_size] = {'\0'};
     tuczi::Websocket websocket(clientSocket);
-  websocket.init();
+  if(!websocket.init()){
+    std::cerr<<"websocket heandshake error\n";
+    exit(0);
+  }
     size_t byteCounter;
     do{
 	  status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
@@ -115,7 +118,10 @@ void imgTest(int clientSocket) {
     char buf[buf_size] = {'\0'};
     uint8_t dataToSend[buf_size] ;
     tuczi::Websocket websocket(clientSocket);
-  websocket.init();
+  if(!websocket.init()) {
+    std::cerr<<"websocket heandshake error\n";
+    exit(0);
+  }
 	while(true) {
       size_t byteCounter;
       do{
