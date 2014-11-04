@@ -1,0 +1,63 @@
+<!DOCTYPE html>  <meta charset="utf-8" />  <title>WebSocket Test</title>
+<script language="javascript" type="text/javascript"> 
+var wsUri = "ws://localhost:9000/";
+var output; 
+function init() { output = document.getElementById("output"); testWebSocket(); } 
+function testWebSocket() { 
+	websocket = new WebSocket(wsUri); websocket.onopen = function(evt) { onOpen(evt) 
+	};
+	websocket.binaryType = "blob";//"arraybuffer"; //blob
+	websocket.onclose = function(evt) { onClose(evt) };
+	websocket.onmessage = function(evt) { onMessage(evt) };
+	websocket.onerror = function(evt) { onError(evt) }; 
+ }
+  
+  function onOpen(evt) {
+    writeToScreen("CONNECTED");
+  }
+  function onClose(evt) {
+    writeToScreen("DISCONNECTED");
+  }
+  
+  function onMessage(evt) {
+    writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
+    //canvas
+    
+    var fr = new FileReader();
+    fr.onloadend = function() {
+        var dataUrl = fr.result;
+        // Paint image, as a proof of concept
+        var img = document.getElementById("image");
+        img.src = dataUrl;
+        document.body.appendChild(img);
+    };
+    fr.readAsDataURL(evt.data);
+    //websocket.close();
+  }
+  function onError(evt) {
+    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+  }
+  
+  function doSend(message) {
+    writeToScreen("SENT: " + message);
+    websocket.send(message);
+  }
+  
+  function writeToScreen(message) {
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message; output.appendChild(pre);
+  } 
+  
+  window.addEventListener("load", init, false); 
+</script> 
+<h2>WebSocket Test</h2>  
+<button onclick='doSend("medium.jpg")'>medium</button>
+<button onclick='doSend("big.jpg")'>big</button>
+<button onclick='doSend("small.jpg")'>small</button>
+<button onclick='doSend("32x32.jpg")'>32x32</button>
+<button onclick='doSend("a.png")'>a</button>
+<br/>
+<img id="image" width="400px" height= "400px" src="" alt="Red dot">
+<div id="output"></div> 
+
