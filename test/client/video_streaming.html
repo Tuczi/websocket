@@ -23,15 +23,17 @@ function testWebSocket() {
     writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
     //canvas
     
-    var fr = new FileReader();
-    fr.onloadend = function() {
-        var dataUrl = fr.result;
-        // Paint image, as a proof of concept
-        var img = document.getElementById("image");
-        img.src = dataUrl;
-        document.body.appendChild(img);
-    };
-    fr.readAsDataURL(evt.data);
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext('2d');
+       var imageData = ctx.createImageData(240,320);
+       
+		for (var i = 0, len = 240*320 * 3; i < len; i++) { //have to copy?
+			imageData.data[i] = evt.data[i];
+		}
+       ctx.putImageData(imageData, 0, 0);
+   
+
+
     //websocket.close();
   }
   function onError(evt) {
@@ -52,12 +54,9 @@ function testWebSocket() {
   window.addEventListener("load", init, false); 
 </script> 
 <h2>WebSocket Test</h2>  
-<button onclick='doSend("medium.jpg")'>medium</button>
-<button onclick='doSend("big.jpg")'>big</button>
-<button onclick='doSend("small.jpg")'>small</button>
-<button onclick='doSend("32x32.jpg")'>32x32</button>
-<button onclick='doSend("a.png")'>a</button>
+<button onclick='doSend("movie.mp4")'>medium</button>
 <br/>
-<img id="image" width="400px" height= "400px" src="" alt="Red dot">
+<img id="image" width="400px" height= "400px" src="" alt="Red dot"/>
+<canvas id="canvas" width="400px" height="400px" />
 <div id="output"></div> 
 

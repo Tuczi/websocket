@@ -12,6 +12,7 @@
 #include <signal.h>
 
 #include <fstream>
+#include <opencv2/opencv.hpp>
 
 #define SERVER_PORT 9000
 #define QUEUE_SIZE 5
@@ -22,4 +23,5 @@ void serveClient(int clientSocket);
 
 void textTest(int);
 void imgTest(int);
+void videoTest(int);
 #endif

@@ -1,6 +1,7 @@
 CXX = g++
 CXX_FLAGS = -Wall -Wextra -std=c++11
 LFLAGS = -lcrypto
+OPENCV_L_FLAGS = -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml -lopencv_video -lopencv_features2d -lopencv_calib3d -lopencv_objdetect -lopencv_contrib -lopencv_legacy -lopencv_flann
 
 WEBSOCKET_FILES = websocket
 WEBSOCKET_OBJS = $(WEBSOCKET_FILES:%=obj/%.o)
@@ -14,7 +15,7 @@ all: $(WEBSOCKET_OBJS)
 	$(CXX) $(LFLAGS) $(WEBSOCKET_OBJS) -o bin/server
 
 test: $(WEBSOCKET_OBJS) $(TEST_OBJS)	
-	$(CXX) $(LFLAGS) $(WEBSOCKET_OBJS) $(TEST_OBJS) -o bin/test-server
+	$(CXX) $(LFLAGS) $(OPENCV_L_FLAGS) $(WEBSOCKET_OBJS) $(TEST_OBJS) -o bin/test-server
 
 $(WEBSOCKET_OBJS): obj/%.o: src/%.cpp
 	$(CXX) -c $(CXX_FLAGS) -o $@ $<
