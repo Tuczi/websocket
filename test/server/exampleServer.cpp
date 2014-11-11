@@ -84,14 +84,14 @@ void textTest(int clientSocket) {
   uint8_t* buf;
   size_t bufSize, byteCounter;
 
-  status = websocket.read(buf, bufSize, byteCounter);
+  status = websocket.read( (void*&) buf, bufSize);
   printf("status: %d, msg: %s", status, buf);
   delete[] buf;
 
   std::string dataToSend = "Hello";
-  status = websocket.write( dataToSend.c_str(), bufSize );
+  status = websocket.write( (void*)dataToSend.c_str(), bufSize );
 
-  status = websocket.read( (uint8_t*) buf, bufSize, byteCounter );
+  status = websocket.read( (void*&) buf, bufSize);
   printf("status: %d, msg: %s", status, buf);
   delete[] buf;
 
@@ -103,7 +103,7 @@ void imgTest(int clientSocket) {
   bool status;
   uint8_t* readBuf;
   static size_t writeBufSize = 1024;
-  uint8_t writeBuf[wrtieBufSize];
+  uint8_t writeBuf[writeBufSize];
   size_t bufSize;
 
   tuczi::Websocket websocket(clientSocket);
@@ -115,7 +115,7 @@ void imgTest(int clientSocket) {
 
   while(true) {
     size_t byteCounter;
-    status = websocket.read( readBuf, bufSize);
+    status = websocket.read( (void*&)readBuf, bufSize);
 
     std::string name("test/server/resources/");
     name = name + (const char*) readBuf;
@@ -133,9 +133,10 @@ void imgTest(int clientSocket) {
     size_t sendedBytes=0;
     if(status) {
       while(file) {
-        size_t c = bufSize : file.gcount();
+        file.read((char*)writeBuf, writeBufSize);
+        size_t c = file ? bufSize : file.gcount();
         std::cout<<"c: "<<c<<std::endl;
-        status = websocket.writePart( (void*) dataToSend, c, byteCounter) ;
+        status = websocket.writePart( (void*)writeBuf, c);
         printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
       }
     }
@@ -160,7 +161,7 @@ void videoTest(int clientSocket) {
   while(true) {
     size_t byteCounter;
 
-    status = websocket.read( (void*)buf, bufSize);
+    status = websocket.read( (void*&)buf, bufSize);
     printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
 
     std::string name("test/server/resources/");

@@ -231,10 +231,6 @@ bool Websocket::writePart(void* buffer, size_t bufferSize) {
   return status;
 }
 
-inline bool Websocket::write(void* buffer, size_t bufferSize, Opcode dataType) {
-  return writeHeader(bufferSize, dataType) && writePart(buffer, bufferSize);
-}
-
 bool Websocket::read(void*& buffer, size_t& bufferSize) {
   uint8_t header[MAX_HEADER_SIZE];
 

@@ -7,7 +7,7 @@ to init conneciton (do heandshake) and simple read/write to socket.
 It support sending/receiving partial message/frame (small buffer).
 Library is using system and openssl functions.
 
-##Sample aps
+##Sample apps
 See sample apps:
 * chat (text data)
 * image sending

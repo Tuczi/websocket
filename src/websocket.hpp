@@ -156,7 +156,9 @@ class Websocket {
    *
    * @return true if written, false otherwise
    */
-  inline bool write(void* buffer, size_t bufferSize, Opcode dataType = Opcode::TEXT);
+  inline bool write(void* buffer, size_t bufferSize, Opcode dataType = Opcode::TEXT) {
+    return writeHeader(bufferSize, dataType) && writePart(buffer, bufferSize);
+  }
 
 
   //TODO operator << >>
