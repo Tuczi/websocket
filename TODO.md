@@ -7,8 +7,8 @@ TODO list:
 * Efficient & features
   * Avoid multiple buffor copy (write_header)
   * Methods to read/write:
-    * full buffer
-    * full message
+    * operator >>
+    * operatore <<
   * Serialize + deserialize (especialy std::string)
 * Functionality
   * Fragmentation - RFC6455 section 5.4
