@@ -210,5 +210,45 @@ void Websocket::frameHeader(size_t bufSize, Opcode opcode, uint8_t (&header)[MAX
   printf("\n");
 }
 
+bool Websocket::readPart(void* buffer, size_t bufferSize, size_t& dataRead) {
+  size_t tmp=0, read=0;
+  bool status=true;
+
+  for(;status && read!= bufferSize; read+=tmp)
+   status = this->read((uint8_t*)(buffer)+read, bufferSize-read, tmp);
+
+  dataRead=read;
+  return status;
+}
+
+bool Websocket::writePart(void* buffer, size_t bufferSize) {
+  size_t tmp=0, written=0;
+  bool status=true;
+
+  for(;status && written!=bufferSize; written+=tmp)
+    status = write((uint8_t*)(buffer)+written, bufferSize-written, tmp);
+
+  return status;
+}
+
+inline bool Websocket::write(void* buffer, size_t bufferSize, Opcode dataType) {
+  return writeHeader(bufferSize, dataType) && writePart(buffer, bufferSize);
+}
+
+bool Websocket::read(void*& buffer, size_t& bufferSize) {
+  uint8_t header[MAX_HEADER_SIZE];
+
+  ::read(descriptor, header, MAX_HEADER_SIZE);
+  size_t headerSize = parseFrame(header, MAX_HEADER_SIZE);
+
+  bufferSize = readCtx.frameSize;
+  buffer = ::malloc(bufferSize);
+
+  memcpy(header, buffer, MAX_HEADER_SIZE - headerSize);
+
+  size_t tmp;
+  return readPart((uint8_t*)(buffer) + MAX_HEADER_SIZE - headerSize, bufferSize, tmp);
+}
+
 }
 

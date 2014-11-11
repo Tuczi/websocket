@@ -78,19 +78,6 @@ class Websocket {
     size_t parseFrame(uint8_t * buffer, size_t bufferSize);
     void frameHeader(size_t dataSize, Opcode opcode, uint8_t (&header)[MAX_HEADER_SIZE], size_t& headerSize);
 
-  public:
-    /**
-     * Construct an object. Set memory only. Do not send any data.
-     */
-    Websocket(int descriptor_): descriptor(descriptor_), writeCtx(), readCtx() { }
-
-    /**
-     * Init a connection. Send heandshake.
-     *
-     * @return true if connection correctly established
-     */
-    bool init();
-
   /**
    * Read from websocket. This method can be called multiple times to
    *
@@ -108,6 +95,19 @@ class Websocket {
    */
   bool write(uint8_t* buffer, size_t bufferSize, size_t& dataWritten);
 
+  public:
+    /**
+     * Construct an object. Set memory only. Do not send any data.
+     */
+    Websocket(int descriptor_): descriptor(descriptor_), writeCtx(), readCtx() { }
+
+    /**
+     * Init a connection. Send heandshake.
+     *
+     * @return true if connection correctly established
+     */
+    bool init();
+
   /**
    * Start sending frame (or frames to client).
    * Send websocketHeader. After call this method
@@ -119,6 +119,47 @@ class Websocket {
    * @return true if correct. false otherwise
    */
   bool writeHeader(size_t dataSize, Opcode dataType = Opcode::TEXT); //TODO #define or const
+
+  /**
+   * Write buffer whole to socket.
+   * bufferSize may be diffrent then headerSize.
+   * May be call multiple times.
+   * WriteHeader must be called first!
+   *
+   * @return true if written (whole buffer), false = error
+   */
+  bool writePart(void* buffer, size_t bufferSize);
+
+  /**
+   * Read from websocket to buffer.
+   * bufferSize may be diffrent then headerSize.
+   * May be called multiple times.
+   *
+   * @return true if read (whole buffer), false = error
+   */
+  bool readPart(void* buffer, size_t bufferSize, size_t& dataRead);
+
+  /**
+   * Read whole message.
+   * Dynamic memory allocation.
+   *
+   * @param buffer buffer pointer reference
+   * @param bufferSize size of readed message(frame)
+   *
+   * @return true if readed, false otherwise
+   */
+  bool read(void*& buffer, size_t& bufferSize);
+
+  /**
+   * Write whole message (buffer) as frame.
+   *
+   * @return true if written, false otherwise
+   */
+  inline bool write(void* buffer, size_t bufferSize, Opcode dataType = Opcode::TEXT);
+
+
+  //TODO operator << >>
+
 };
 }
 #endif
