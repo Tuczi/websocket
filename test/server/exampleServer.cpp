@@ -74,148 +74,123 @@ void serveClient(int clientSocket) {
 }
 
 void textTest(int clientSocket) {
-	 bool status;
-    static int buf_size = 1000;
-    char buf[buf_size] = {'\0'};
-    tuczi::Websocket websocket(clientSocket);
+  tuczi::Websocket websocket(clientSocket);
+
   if(!websocket.init()){
     std::cerr<<"websocket heandshake error\n";
     exit(0);
   }
-    size_t byteCounter;
-    do{
-	  status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
-	  buf[byteCounter]='\0';
-      printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
-     } while(status);
+  bool status;
+  uint8_t* buf;
+  size_t bufSize, byteCounter;
 
-    std::string dataToSend = "Hello";
-    status = websocket.writeHeader( dataToSend.size() );
-    printf("writeHeader - status %d\n", status);
+  status = websocket.read(buf, bufSize, byteCounter);
+  printf("status: %d, msg: %s", status, buf);
+  delete[] buf;
 
-    if(status) {
-	  size_t shift=0;
-	  do {
-        status = websocket.write( (uint8_t*) dataToSend.c_str()+shift, dataToSend.size()-shift, byteCounter) ;
-        shift+=byteCounter;
-        printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
-      } while(status);
-    }
+  std::string dataToSend = "Hello";
+  status = websocket.write( dataToSend.c_str(), bufSize );
 
-    do{
-      status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
-      buf[byteCounter]='\0';
-      printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
-    } while(status);
+  status = websocket.read( (uint8_t*) buf, bufSize, byteCounter );
+  printf("status: %d, msg: %s", status, buf);
+  delete[] buf;
 
-    close(clientSocket);
-    exit(0);
+  close(clientSocket);
+  exit(0);
 }
 
 void imgTest(int clientSocket) {
-	 bool status;
-    static int buf_size = 10000;
-    char buf[buf_size] = {'\0'};
-    uint8_t dataToSend[buf_size] ;
-    tuczi::Websocket websocket(clientSocket);
+  bool status;
+  uint8_t* readBuf;
+  static size_t writeBufSize = 1024;
+  uint8_t writeBuf[wrtieBufSize];
+  size_t bufSize;
+
+  tuczi::Websocket websocket(clientSocket);
+
   if(!websocket.init()) {
     std::cerr<<"websocket heandshake error\n";
     exit(0);
   }
-	while(true) {
-      size_t byteCounter;
-      do{
-	    status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
-	    buf[byteCounter]='\0';
-        printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
-       } while(status);
 
-      std::string name("test/server/resources/");
-      name = name + buf;
+  while(true) {
+    size_t byteCounter;
+    status = websocket.read( readBuf, bufSize);
 
-      std::fstream file(name, std::ios_base::in| std::ios_base::binary);
-      std::cout<<name<<" File exists?"<< file.good()<<std::endl;
-      file.seekg (0, file.end);
-	  int length = file.tellg();
-	  file.seekg (0, file.beg);
-      status = websocket.writeHeader( length, tuczi::Websocket::Opcode::BINARY );
-      printf("writeHeader - status %d, size %d\n", status, length);
+    std::string name("test/server/resources/");
+    name = name + (const char*) readBuf;
+    delete[] readBuf;
 
-      int sendedBytes=0;
-      if(status) {
-	    size_t shift=0;
-	    do {
-		  shift=0;
-		  file.read((char*)dataToSend, buf_size);
-		  size_t c= file ? buf_size : file.gcount();
-		  std::cout<<"c: "<<c<<std::endl;
-		  while(shift<c) {
-            status = websocket.write( (uint8_t*) dataToSend+shift, c-shift, byteCounter) ;
-            shift+=byteCounter;
-          }
-          sendedBytes+=shift;
-          printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
-        } while(sendedBytes < length);
+    std::fstream file(name, std::ios_base::in| std::ios_base::binary);
+    std::cout<<name<<" File exists?"<< file.good()<<std::endl;
+    file.seekg (0, file.end);
+    int length = file.tellg();
+    file.seekg (0, file.beg);
+
+    status = websocket.writeHeader( length, tuczi::Websocket::Opcode::BINARY );
+    printf("writeHeader - status %d, size %d\n", status, length);
+
+    size_t sendedBytes=0;
+    if(status) {
+      while(file) {
+        size_t c = bufSize : file.gcount();
+        std::cout<<"c: "<<c<<std::endl;
+        status = websocket.writePart( (void*) dataToSend, c, byteCounter) ;
+        printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
       }
-      file.close();
-	}
-    close(clientSocket);
-    exit(0);
+    }
+    file.close();
+  }
+  close(clientSocket);
+  exit(0);
 }
 
 void videoTest(int clientSocket) {
-	 bool status;
-    static int buf_size = 10000;
-    char buf[buf_size] = {'\0'};
-    uint8_t dataToSend[buf_size] ;
-    tuczi::Websocket websocket(clientSocket);
+  bool status;
+  size_t bufSize;
+  uint8_t* buf;
+
+  tuczi::Websocket websocket(clientSocket);
+
   if(!websocket.init()) {
     std::cerr<<"websocket heandshake error\n";
     exit(0);
   }
-	while(true) {
-      size_t byteCounter;
-      do{
-	    status = websocket.read( (uint8_t*) buf, buf_size, byteCounter );
-	    buf[byteCounter]='\0';
-        printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
-       } while(status);
 
-      std::string name("test/server/resources/");
-      name = name + buf;
+  while(true) {
+    size_t byteCounter;
 
-      cv::VideoCapture videoCap;
-      videoCap.open(name);
-      std::cout<<name<<" File exists?"<< videoCap.isOpened()<<std::endl;
-      
-      cv::Mat frame;
-      while(videoCap.isOpened()) {
-          bool bSuccess = videoCap.read(frame); // read a new frame from video
-          if (!bSuccess) //if not success, break loop
-          {
-                         std::cout << "Cannot read the frame from video file" << std::endl;
-                         break;
-          }
-		
-		printf("R: %d, C%d", frame.rows, frame.cols);
-		size_t s = frame.rows * frame.cols*3;
-		
-		status = websocket.writeHeader( s, tuczi::Websocket::Opcode::BINARY );
-		printf("writeHeader - status %d, size %d\n", status, s);
-		byteCounter=0;
-        if(status) {
-			do {
-			  size_t tmp;
-			  websocket.write(frame.data +byteCounter, s-byteCounter, tmp);
-			  byteCounter+=tmp;
-		    } while(byteCounter<s);
-			
-		}
-        
-		}
-		std::cout<<"LOOP END"<<std::endl;
-		break;
-	}
-    close(clientSocket);
-    exit(0);
+    status = websocket.read( (void*)buf, bufSize);
+    printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
+
+    std::string name("test/server/resources/");
+    name = name + (const char*)buf;
+    delete[] buf;
+
+    cv::VideoCapture videoCap;
+    videoCap.open(name);
+    std::cout<<name<<" File exists?"<< videoCap.isOpened()<<std::endl;
+
+    cv::Mat frame;
+    while(videoCap.isOpened()) {
+      status = videoCap.read(frame); // read a new frame from video
+      if (!status) { //if not success, break loop
+        std::cout << "Cannot read the frame from video file" << std::endl;
+        break;
+      }
+
+      printf("R: %d, C%d", frame.rows, frame.cols);
+      size_t frameSize = frame.rows * frame.cols*3;
+
+      status = websocket.write( (void*)frame.data, frameSize, tuczi::Websocket::Opcode::BINARY );
+      printf("write - status %d, size %d\n", status, frameSize);
+    }
+
+    std::cout<<"LOOP END"<<std::endl;
+    break;
+  }
+
+  close(clientSocket);
+  exit(0);
 }
+

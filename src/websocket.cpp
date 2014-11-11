@@ -91,7 +91,7 @@ void Websocket::parseHeandshake(std::string& buffer, HeandshakeCtx& heandshakeCt
   //TODO protocols
 }
 
-bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
+bool Websocket::read_(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   bytesRead = ::read(descriptor, buf, bufSize);
   size_t shift = 0;
   if(readCtx.frameSize == 0) { //new frame
@@ -122,7 +122,7 @@ bool Websocket::read(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   return readCtx.frameSize != 0;
 }
 
-bool Websocket::write(uint8_t* buf, size_t bufSize, size_t& bytesWritten) {
+bool Websocket::write_(uint8_t* buf, size_t bufSize, size_t& bytesWritten) {
   if(writeCtx.frameSize <= bufSize)
     bytesWritten = ::write(descriptor, buf, writeCtx.frameSize);
   else
@@ -150,7 +150,7 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
   bool rsv1 = buf[0] & (1<<6),
        rsv2 = buf[0] & (1<<5),
        rsv3 = buf[0] & (1<<4);
-  uint8_t opcode = (buf[0] & 0x0f);
+  readCtx.opcode = (buf[0] & 0x0f);
   readCtx.mask = buf[1] & (1<<7);
   uint8_t tmp = (uint8_t)buf[1] & ~(1<<7);
   uint8_t shift = 0;
@@ -171,7 +171,7 @@ size_t Websocket::parseFrame(uint8_t* buf, size_t bufSize) {
       readCtx.frameSize = tmp;
       shift = 2;
   }
-  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %ld %d\n", readCtx.fin, rsv1, rsv2, rsv3, opcode, readCtx.mask, tmp, readCtx.frameSize, buf[2]<<16 | buf[3]<<8 | buf[4] );
+  printf("fin: %d,rsv: %d %d %d, opcode: %d, mask?: %d, size(tmp): %d, size: %ld %d\n", readCtx.fin, rsv1, rsv2, rsv3, readCtx.opcode, readCtx.mask, tmp, readCtx.frameSize, buf[2]<<16 | buf[3]<<8 | buf[4] );
 
   if(readCtx.mask) {
     memcpy(readCtx.maskingKey, buf+shift, 4);
@@ -215,7 +215,7 @@ bool Websocket::readPart(void* buffer, size_t bufferSize, size_t& dataRead) {
   bool status=true;
 
   for(;status && read!= bufferSize; read+=tmp)
-   status = this->read((uint8_t*)(buffer)+read, bufferSize-read, tmp);
+   status = read_((uint8_t*)(buffer)+read, bufferSize-read, tmp);
 
   dataRead=read;
   return status;
@@ -226,7 +226,7 @@ bool Websocket::writePart(void* buffer, size_t bufferSize) {
   bool status=true;
 
   for(;status && written!=bufferSize; written+=tmp)
-    status = write((uint8_t*)(buffer)+written, bufferSize-written, tmp);
+    status = write_((uint8_t*)(buffer)+written, bufferSize-written, tmp);
 
   return status;
 }
@@ -242,7 +242,9 @@ bool Websocket::read(void*& buffer, size_t& bufferSize) {
   size_t headerSize = parseFrame(header, MAX_HEADER_SIZE);
 
   bufferSize = readCtx.frameSize;
-  buffer = ::malloc(bufferSize);
+  bufferSize+= (readCtx.opcode == Opcode::TEXT);
+  buffer = new uint8_t[bufferSize];
+  ((uint8_t*)(buffer))[bufferSize-1]=0;
 
   memcpy(header, buffer, MAX_HEADER_SIZE - headerSize);
 

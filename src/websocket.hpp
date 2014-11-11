@@ -42,6 +42,7 @@ class Websocket {
   struct ReadCtx {
     bool fin = false;
     bool mask = false;
+    uint8_t opcode = 0;
     uint8_t maskingKey[4];
     uint8_t maskingKeyIter=0;
     uint64_t frameSize = 0;
@@ -83,7 +84,7 @@ class Websocket {
    *
    * @return true if have to be called again (to receive next part of data). false otherwise.
    */
-  bool read(uint8_t* buffer, size_t bufferSize, size_t& dataRead);
+  bool read_(uint8_t* buffer, size_t bufferSize, size_t& dataRead);
 
   /**
    * Send data into client. May be called multiple times.
@@ -93,7 +94,7 @@ class Websocket {
    *
    * @return true if have to be called again (to send next part of data). false otherwise
    */
-  bool write(uint8_t* buffer, size_t bufferSize, size_t& dataWritten);
+  bool write_(uint8_t* buffer, size_t bufferSize, size_t& dataWritten);
 
   public:
     /**
