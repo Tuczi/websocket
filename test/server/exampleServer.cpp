@@ -69,7 +69,7 @@ void startServer(int& argc, char**& argv)
 
 void serveClient(int clientSocket) {
   if(!fork()) {
-	videoTest(clientSocket);
+    imgTest(clientSocket);
   }
 }
 
@@ -159,10 +159,10 @@ void videoTest(int clientSocket) {
   }
 
   while(true) {
-    size_t byteCounter;
+    size_t byteCounter=0;
 
     status = websocket.read( (void*&)buf, bufSize);
-    printf("READ - byteCounter %d, status: %d, readed: %s,\n", byteCounter, status, buf);
+    printf("READ - buf szie: %d,status: %d, readed: %s,\n", bufSize, status, buf);
 
     std::string name("test/server/resources/");
     name = name + (const char*)buf;
@@ -180,11 +180,11 @@ void videoTest(int clientSocket) {
         break;
       }
 
-      printf("R: %d, C%d", frame.rows, frame.cols);
+      printf("R: %d, C%d\n", frame.rows, frame.cols);
       size_t frameSize = frame.rows * frame.cols*3;
 
       status = websocket.write( (void*)frame.data, frameSize, tuczi::Websocket::Opcode::BINARY );
-      printf("write - status %d, size %d\n", status, frameSize);
+      printf("write - status %d, size: %d\n", status, frameSize);
     }
 
     std::cout<<"LOOP END"<<std::endl;

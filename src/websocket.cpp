@@ -98,7 +98,6 @@ bool Websocket::read_(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
     shift = parseFrame(buf, bufSize);
   }
   uint8_t* data = (uint8_t*)buf+shift;
-
   if(readCtx.mask && shift)
     for(size_t i=0; i<(size_t)bytesRead-shift; i++)
       buf[i]=data[i] ^ readCtx.maskingKey[(i + readCtx.maskingKeyIter)%4];
@@ -232,20 +231,24 @@ bool Websocket::writePart(void* buffer, size_t bufferSize) {
 }
 
 bool Websocket::read(void*& buffer, size_t& bufferSize) {
-  uint8_t header[MAX_HEADER_SIZE];
+  uint8_t header[100];
+  size_t byteRead=0;
+  read_( header, 100, byteRead );
 
-  ::read(descriptor, header, MAX_HEADER_SIZE);
-  size_t headerSize = parseFrame(header, MAX_HEADER_SIZE);
-
-  bufferSize = readCtx.frameSize;
-  bufferSize+= (readCtx.opcode == Opcode::TEXT);
+  bufferSize = readCtx.frameSize>0? readCtx.frameSize : byteRead;
+  printf("ddd %d\n", bufferSize);
+  bool isText = (readCtx.opcode == Opcode::TEXT);
+  bufferSize += isText;
   buffer = new uint8_t[bufferSize];
-  ((uint8_t*)(buffer))[bufferSize-1]=0;
+  ((uint8_t*)(buffer))[bufferSize-1] = '\0';
 
-  memcpy(header, buffer, MAX_HEADER_SIZE - headerSize);
+  memcpy(buffer, header, byteRead);
+
+  if(readCtx.frameSize == 0) //frame end - no more data
+    return true;
 
   size_t tmp;
-  return readPart((uint8_t*)(buffer) + MAX_HEADER_SIZE - headerSize, bufferSize, tmp);
+  return readPart((uint8_t*)(buffer)+byteRead, bufferSize-isText, tmp);
 }
 
 }
