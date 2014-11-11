@@ -95,6 +95,7 @@ bool Websocket::read_(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
   bytesRead = ::read(descriptor, buf, bufSize);
   size_t shift = 0;
   if(readCtx.frameSize == 0) { //new frame
+    readCtx = ReadCtx();
     shift = parseFrame(buf, bufSize);
   }
   uint8_t* data = (uint8_t*)buf+shift;
@@ -113,10 +114,6 @@ bool Websocket::read_(uint8_t* buf, size_t bufSize, size_t& bytesRead) {
 
   bytesRead-=shift;
   readCtx.frameSize -= bytesRead;
-
-  if(readCtx.frameSize ==0) { //end of frame
-    readCtx.mask=false;
-  }
 
   return readCtx.frameSize != 0;
 }
@@ -236,7 +233,6 @@ bool Websocket::read(void*& buffer, size_t& bufferSize) {
   read_( header, 100, byteRead );
 
   bufferSize = readCtx.frameSize>0? readCtx.frameSize : byteRead;
-  printf("ddd %d\n", bufferSize);
   bool isText = (readCtx.opcode == Opcode::TEXT);
   bufferSize += isText;
   buffer = new uint8_t[bufferSize];

@@ -134,13 +134,14 @@ void imgTest(int clientSocket) {
     if(status) {
       while(file) {
         file.read((char*)writeBuf, writeBufSize);
-        size_t c = file ? bufSize : file.gcount();
+        size_t c = file ? writeBufSize : file.gcount();
         std::cout<<"c: "<<c<<std::endl;
         status = websocket.writePart( (void*)writeBuf, c);
         printf("WRITE - byteCounter: %d, status: %d\n", byteCounter, status);
       }
     }
     file.close();
+    printf("File closed\n");
   }
   close(clientSocket);
   exit(0);
@@ -185,6 +186,7 @@ void videoTest(int clientSocket) {
 
       status = websocket.write( (void*)frame.data, frameSize, tuczi::Websocket::Opcode::BINARY );
       printf("write - status %d, size: %d\n", status, frameSize);
+      sleep(1);
     }
 
     std::cout<<"LOOP END"<<std::endl;
