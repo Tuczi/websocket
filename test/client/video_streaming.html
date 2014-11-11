@@ -6,7 +6,7 @@ function init() { output = document.getElementById("output"); testWebSocket(); }
 function testWebSocket() { 
 	websocket = new WebSocket(wsUri); websocket.onopen = function(evt) { onOpen(evt) 
 	};
-	websocket.binaryType = "blob";//"arraybuffer"; //blob
+	websocket.binaryType = "arraybuffer"; //blob
 	websocket.onclose = function(evt) { onClose(evt) };
 	websocket.onmessage = function(evt) { onMessage(evt) };
 	websocket.onerror = function(evt) { onError(evt) }; 
@@ -20,22 +20,19 @@ function testWebSocket() {
   }
   
   function onMessage(evt) {
-    writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
+    //writeToScreen('<span style="color: blue;">RESPONSE:!</span>');
     //canvas
-    
-        var canvas = document.getElementById("canvas");
-        var ctx = canvas.getContext('2d');
-       var imageData = ctx.createImageData(320,240);
-		for (var i = 0,j=0; i < 240*320*3; i+=3,j+=4) { //have to copy?
-			imageData.data[j] = evt.data[i];
-			imageData.data[j+1] = evt.data[i+1];
-			imageData.data[j+2] = evt.data[i+2];
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext('2d');
+    var imageData = ctx.createImageData(320,240);
+    var socketData=new Uint8Array(event.data);
+    for (var i = 0,j=0; i < 240*320*3; i+=3,j+=4) { //have to copy?
+			imageData.data[j] = socketData[i+0];
+			imageData.data[j+1] = socketData[i+1];
+			imageData.data[j+2] = socketData[i+2];
 			imageData.data[j+3] = 255;
 		}
-       ctx.putImageData(imageData, 0, 0);
-   
-
-
+    ctx.putImageData(imageData, 0, 0); 
     //websocket.close();
   }
   function onError(evt) {

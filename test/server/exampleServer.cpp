@@ -69,7 +69,7 @@ void startServer(int& argc, char**& argv)
 
 void serveClient(int clientSocket) {
   if(!fork()) {
-    imgTest(clientSocket);
+    videoTest(clientSocket);
   }
 }
 
@@ -186,7 +186,6 @@ void videoTest(int clientSocket) {
 
       status = websocket.write( (void*)frame.data, frameSize, tuczi::Websocket::Opcode::BINARY );
       printf("write - status %d, size: %d\n", status, frameSize);
-      sleep(1);
     }
 
     std::cout<<"LOOP END"<<std::endl;
