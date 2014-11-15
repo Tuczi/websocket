@@ -247,5 +247,31 @@ bool Websocket::read(void*& buffer, size_t& bufferSize) {
   return readPart((uint8_t*)(buffer)+byteRead, bufferSize-isText, tmp);
 }
 
+Websocket::Frame Websocket::read() {
+  uint8_t header[100];
+  size_t byteRead=0,tmp;
+  read_( header, 100, byteRead );
+
+  size_t bufferSize = readCtx.frameSize>0? readCtx.frameSize : byteRead;
+  bool isText = (readCtx.opcode == Opcode::TEXT);
+  if(isText) {
+    std::string buffer(bufferSize, '\0');
+    memcpy((void*)buffer.c_str(), header, byteRead);
+
+    if(readCtx.frameSize) //frame not end - no more data
+      readPart((uint8_t*)(buffer.c_str())+byteRead, bufferSize, tmp);
+
+    return Frame(buffer);
+  }
+
+  uint8_t* buffer = new uint8_t[bufferSize];
+  memcpy(buffer, header, byteRead);
+
+  if(readCtx.frameSize) //frame not end - no more data
+    readPart(buffer + byteRead, bufferSize, tmp);
+
+  return Frame(buffer, bufferSize);
+}
+
 }
 

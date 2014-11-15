@@ -150,7 +150,6 @@ void imgTest(int clientSocket) {
 void videoTest(int clientSocket) {
   bool status;
   size_t bufSize;
-  uint8_t* buf;
 
   tuczi::Websocket websocket(clientSocket);
 
@@ -162,12 +161,13 @@ void videoTest(int clientSocket) {
   while(true) {
     size_t byteCounter=0;
 
-    status = websocket.read( (void*&)buf, bufSize);
-    printf("READ - buf szie: %d,status: %d, readed: %s,\n", bufSize, status, buf);
-
+    printf("aaa\n");
+    tuczi::Websocket::Frame wframe;
+    wframe=websocket.read();
+    std::cerr<<"aaa-end\n";
+    printf("READ - frame: size %d, %s\n", wframe.size, wframe.data.str.c_str());
     std::string name("test/server/resources/");
-    name = name + (const char*)buf;
-    delete[] buf;
+    name = name + wframe.data.str;
 
     cv::VideoCapture videoCap;
     videoCap.open(name);

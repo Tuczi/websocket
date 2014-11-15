@@ -67,6 +67,50 @@ class Websocket {
       PONG_FRAME = 10
     };
 
+    struct Frame {
+      struct data_t {//TODO union
+        std::string str;
+        uint8_t* bin;
+
+        data_t() { bin=nullptr; }
+        data_t(std::string& str_): str(str_) { }
+        data_t(uint8_t* bin_): bin(bin_) { }
+        ~data_t() { }
+      };
+
+      size_t size;
+      bool isText;
+      data_t data;
+
+      Frame(std::string& str): size(str.size()), isText(true), data(str) { }
+      Frame(uint8_t* bin, size_t size_): size(size_), isText(false), data(bin) { }
+
+      Frame(): size(0), isText(false), data() { }
+      Frame(Frame&& frame): size(frame.size), isText(frame.isText) {
+        if(frame.isText) data.str=frame.data.str;
+        else data.bin=frame.data.bin;
+
+        frame.isText=false;
+        frame.data.bin=nullptr;
+      }
+
+      ~Frame() {
+        if(isText) data.str.~basic_string<char>();
+        else delete data.bin;
+      }
+
+      Frame& operator= (Frame&& frame) {
+        size=frame.size;
+        isText=frame.isText;
+        if(isText) data.str = frame.data.str;
+        else data.bin = frame.data.bin;
+
+        frame.isText=false;
+        frame.data.bin=nullptr;
+      }
+    };
+
+
   private:
     const int descriptor;
     WriteCtx writeCtx;
@@ -160,7 +204,10 @@ class Websocket {
     return writeHeader(bufferSize, dataType) && writePart(buffer, bufferSize);
   }
 
-
+  /**
+   * Read whole message (frame).
+   */
+  Frame read();
   //TODO operator << >>
 
 };
