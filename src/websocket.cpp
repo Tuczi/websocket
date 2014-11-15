@@ -255,22 +255,22 @@ Websocket::Frame Websocket::read() {
   size_t bufferSize = readCtx.frameSize>0? readCtx.frameSize : byteRead;
   bool isText = (readCtx.opcode == Opcode::TEXT);
   if(isText) {
-    std::string buffer(bufferSize, '\0');
-    memcpy((void*)buffer.c_str(), header, byteRead);
+    std::string buffer(bufferSize+1, '\0');
+    memcpy((void*)buffer.data(), header, byteRead);
 
     if(readCtx.frameSize) //frame not end - no more data
-      readPart((uint8_t*)(buffer.c_str())+byteRead, bufferSize, tmp);
+      readPart((uint8_t*)(buffer.data())+byteRead, bufferSize, tmp);
 
     return Frame(buffer);
   }
 
-  uint8_t* buffer = new uint8_t[bufferSize];
-  memcpy(buffer, header, byteRead);
+  std::vector<uint8_t> buffer(bufferSize);
+  memcpy((void*)buffer.data(), header, byteRead);
 
   if(readCtx.frameSize) //frame not end - no more data
-    readPart(buffer + byteRead, bufferSize, tmp);
+    readPart(buffer.data() + byteRead, bufferSize, tmp);
 
-  return Frame(buffer, bufferSize);
+  return Frame(buffer);
 }
 
 }

@@ -163,11 +163,12 @@ void videoTest(int clientSocket) {
 
     printf("aaa\n");
     tuczi::Websocket::Frame wframe;
-    wframe=websocket.read();
-    std::cerr<<"aaa-end\n";
-    printf("READ - frame: size %d, %s\n", wframe.size, wframe.data.str.c_str());
+    wframe = websocket.read();
+    printf("aaa-end\n");
+    printf("READ - frame: size: %d, isText: %d, data: %s\n", wframe.data.str.size(), wframe.isText, wframe.data.str.c_str());
     std::string name("test/server/resources/");
     name = name + wframe.data.str;
+    std::cerr<<"NN:"<<name<<std::endl;
 
     cv::VideoCapture videoCap;
     videoCap.open(name);
