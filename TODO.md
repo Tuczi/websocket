@@ -6,10 +6,6 @@ TODO list:
   * Simple video stream example
 * Efficient & features
   * Avoid multiple buffor copy (write_header)
-  * Methods to read/write:
-    * operator >>
-    * operator <<
-  * Serialize + deserialize (especialy std::string)
 * Functionality
   * Fragmentation - RFC6455 section 5.4
   * Control Frames - RFC5455 section 5.5 (close, ping, pong)

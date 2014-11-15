@@ -78,15 +78,14 @@ class Websocket {
         ~data_t() { }
       };
 
-      size_t size;
       bool isText;
       data_t data;
 
-      Frame(std::string& str): size(str.size()), isText(true), data(str) { }
-      Frame(std::vector<uint8_t>& bin): size(bin.size()), isText(false), data(bin) { }
+      Frame(std::string& str): isText(true), data(str) { }
+      Frame(std::vector<uint8_t>& bin): isText(false), data(bin) { }
 
-      Frame(): size(0), isText(false), data() { }
-      /*Frame(Frame&& frame): size(frame.size), isText(frame.isText) {
+      Frame(): isText(false), data() { }
+      /*Frame(Frame&& frame): isText(frame.isText) {
         if(frame.isText) data.str=frame.data.str;
         else data.bin=frame.data.bin;
       }*/
@@ -97,7 +96,6 @@ class Websocket {
       }
 
       /*Frame& operator= (Frame& frame) {
-        size = frame.size;
         isText = frame.isText;
         if(isText) data.str = frame.data.str;
         else data.bin = frame.data.bin;
@@ -203,8 +201,52 @@ class Websocket {
    * Read whole message (frame).
    */
   Frame read();
-  //TODO operator << >>
 
+  /**
+   * Read frame from socket using operator>>
+   */
+  template <typename T>
+  Websocket& operator>>(T& in) {
+    size_t tmp;
+    readPart((void*)&in, sizeof(T), tmp);
+    return *this;
+  }
+
+  /**
+   * Read from socket to Frame type using operator>>
+   */
+  Websocket& operator>> (Frame& frame) {
+    frame = read();
+    return *this;
+  }
+
+  /**
+   * Write to socket from using operator<<
+   */
+  template <typename T>
+  Websocket& operator<<(T& out) {
+    write((void*)&out, sizeof(T), Opcode::BINARY);
+    return *this;
+  }
+
+  /**
+   * Write to socket from Frame using operator>>
+   */
+  Websocket& operator<<(Frame& frame) {
+    if(frame.isText)
+      write((void*)frame.data.str.c_str(), frame.data.str.size());
+    else
+      write((void*)frame.data.bin.data(), frame.data.bin.size(), Opcode::BINARY);
+    return *this;
+  }
+
+  /**
+   * Write to socket from std::string using operator>>
+   */
+  Websocket& operator<<(std::string& str) {
+    write((void*)str.c_str(), str.size());
+    return *this;
+  }
 };
 }
 #endif

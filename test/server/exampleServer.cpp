@@ -163,7 +163,8 @@ void videoTest(int clientSocket) {
 
     printf("aaa\n");
     tuczi::Websocket::Frame wframe;
-    wframe = websocket.read();
+    //wframe = websocket.read();
+    websocket >> wframe;
     printf("aaa-end\n");
     printf("READ - frame: size: %d, isText: %d, data: %s\n", wframe.data.str.size(), wframe.isText, wframe.data.str.c_str());
     std::string name("test/server/resources/");
