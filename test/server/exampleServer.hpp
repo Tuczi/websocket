@@ -12,6 +12,7 @@
 #include <signal.h>
 
 #include <fstream>
+#include <sstream>
 #include <opencv2/opencv.hpp>
 
 #define SERVER_PORT 9000

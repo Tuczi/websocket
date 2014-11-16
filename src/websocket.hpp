@@ -243,7 +243,7 @@ class Websocket {
   /**
    * Write to socket from std::string using operator>>
    */
-  Websocket& operator<<(std::string& str) {
+  Websocket& operator<<(::std::string& str) {
     write((void*)str.c_str(), str.size());
     return *this;
   }

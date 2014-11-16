@@ -158,9 +158,8 @@ void videoTest(int clientSocket) {
     exit(0);
   }
 
-  while(true) {
-    size_t byteCounter=0;
 
+    size_t byteCounter=0;
     printf("aaa\n");
     tuczi::Websocket::Frame wframe;
     //wframe = websocket.read();
@@ -174,6 +173,17 @@ void videoTest(int clientSocket) {
     cv::VideoCapture videoCap;
     videoCap.open(name);
     std::cout<<name<<" File exists?"<< videoCap.isOpened()<<std::endl;
+
+    if(!videoCap.isOpened())
+      exit(0);
+
+    std::stringstream ss;
+    ss<<"{\"width\":\"" << videoCap.get(CV_CAP_PROP_FRAME_WIDTH)
+      << "\",\"height\":\"" << videoCap.get(CV_CAP_PROP_FRAME_HEIGHT)
+      << "\",\"frequency\":\"" << videoCap.get(CV_CAP_PROP_FPS)
+      << "\",\"scale\":\"" << 1 << "\"}";
+    std::string info = ss.str();
+    websocket<<info;
 
     cv::Mat frame;
     while(videoCap.isOpened()) {
@@ -190,9 +200,9 @@ void videoTest(int clientSocket) {
       printf("write - status %d, size: %d\n", status, frameSize);
     }
 
-    std::cout<<"LOOP END"<<std::endl;
-    break;
-  }
+    std::string endStr="END";
+    websocket<<endStr;
+    std::cout<<"END"<<std::endl;
 
   close(clientSocket);
   exit(0);
