@@ -1,12 +1,12 @@
 websocket
 =========
 ##About
-Server socket implementation of Websocket protocol (RFC6455) in C++.
+Implementation of Websocket protocol (RFC6455) in C++ (Server-side socket).
 Single class Websocket wraps socket descriptor and provides methods 
 to init conneciton (do heandshake) and simple read/write to socket.
-It support sending/receiving partial message/frame (small buffer) and
+It supports sending/receiving partial message/frame (small buffer) and
 full message/frame.
-Library is using lowlevel/system(Linux) and openssl functions.
+Library uses lowlevel/system(Linux) and openssl functions.
 
 ##Sample apps
 See sample apps:
